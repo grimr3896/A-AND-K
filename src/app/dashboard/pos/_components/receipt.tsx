@@ -10,9 +10,11 @@ type ReceiptProps = {
     total: number;
     taxRate: number;
     paymentMethod: string;
+    amountReceived: number;
+    changeDue: number;
 };
 
-export function Receipt({ cart, total, taxRate, paymentMethod }: ReceiptProps) {
+export function Receipt({ cart, total, taxRate, paymentMethod, amountReceived, changeDue }: ReceiptProps) {
     const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const tax = subtotal * (taxRate / 100);
 
@@ -48,9 +50,22 @@ export function Receipt({ cart, total, taxRate, paymentMethod }: ReceiptProps) {
                 <span>Total</span>
                 <span>Ksh {total.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
-                <span>Payment Method</span>
-                <span>{paymentMethod}</span>
+             <Separator className="my-2 bg-black" />
+             <div className="space-y-1">
+                 <div className="flex justify-between">
+                    <span>Payment Method</span>
+                    <span>{paymentMethod}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Amount Received</span>
+                    <span>Ksh {amountReceived.toFixed(2)}</span>
+                </div>
+                {changeDue > 0 && (
+                     <div className="flex justify-between font-bold">
+                        <span>Change Due</span>
+                        <span>Ksh {changeDue.toFixed(2)}</span>
+                    </div>
+                )}
             </div>
             <div className="text-center mt-4">
                 <p>Thank you for your purchase!</p>
@@ -58,5 +73,3 @@ export function Receipt({ cart, total, taxRate, paymentMethod }: ReceiptProps) {
         </div>
     );
 }
-
-    

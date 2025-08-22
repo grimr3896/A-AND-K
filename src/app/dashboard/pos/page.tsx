@@ -21,13 +21,16 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog"
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 
 export default function POSPage() {
   const { toast } = useToast();
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [showReceipt, setShowReceipt] = React.useState(false);
-  const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], total: number, paymentMethod: string } | null>(null);
+  const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], total: number, paymentMethod: string, amountReceived: number, changeDue: number } | null>(null);
+  const [amountReceived, setAmountReceived] = React.useState(0);
 
   // In a real app, this would be fetched from business settings
   const taxRate = 8; 
@@ -35,6 +38,15 @@ export default function POSPage() {
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax;
+  const changeDue = amountReceived > total ? amountReceived - total : 0;
+  
+  React.useEffect(() => {
+    // Automatically update amount received to match total if total is higher
+    if (total > amountReceived || amountReceived === 0) {
+      setAmountReceived(total);
+    }
+  }, [total]);
+
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -73,9 +85,14 @@ export default function POSPage() {
       toast({ variant: 'destructive', title: 'Empty Cart', description: 'Please add items to the cart before checkout.' });
       return;
     }
-    setLastTransaction({ cart, total, paymentMethod });
+     if (amountReceived < total) {
+      toast({ variant: 'destructive', title: 'Insufficient Payment', description: 'Amount received is less than the total.' });
+      return;
+    }
+    setLastTransaction({ cart, total, paymentMethod, amountReceived, changeDue });
     setShowReceipt(true);
     setCart([]);
+    setAmountReceived(0);
   };
   
   const handlePrint = () => {
@@ -118,11 +135,11 @@ export default function POSPage() {
                   <Card key={product.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => addToCart(product)}>
                     <CardContent className="p-2 flex flex-col items-center gap-2">
                       <Image
-                        src={`https://placehold.co/150x150.png`}
+                        src={product.imageUrl || `https://placehold.co/150x150.png`}
                         alt={product.name}
                         width={150}
                         height={150}
-                        className="rounded-md"
+                        className="rounded-md object-cover aspect-square"
                         data-ai-hint="product image"
                       />
                       <div className="text-sm font-medium text-center">{product.name}</div>
@@ -141,7 +158,7 @@ export default function POSPage() {
               <Badge variant="outline">{cart.reduce((acc, item) => acc + item.quantity, 0)} items</Badge>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid gap-2 min-h-[120px]">
+              <div className="grid gap-2 min-h-[120px] max-h-[30vh] overflow-y-auto pr-2">
                 {cart.length > 0 ? (
                   cart.map((item) => (
                     <div key={item.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
@@ -186,15 +203,32 @@ export default function POSPage() {
                   <span>Total</span>
                   <span>Ksh {total.toFixed(2)}</span>
                 </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="amount-received">Amount Received</Label>
+                  <Input 
+                    id="amount-received" 
+                    type="number" 
+                    value={amountReceived}
+                    onChange={(e) => setAmountReceived(Number(e.target.value))}
+                    className="text-right font-mono text-lg h-12"
+                    disabled={cart.length === 0}
+                   />
+                </div>
+                 {changeDue > 0 && (
+                  <div className="flex justify-between font-bold text-lg text-primary">
+                    <span>Change Due</span>
+                    <span>Ksh {changeDue.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
               <Separator />
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => handleCheckout('Cash')}><Banknote className="mr-2 h-4 w-4" /> Cash</Button>
-                <Button variant="outline" onClick={() => handleCheckout('M-Pesa')}><Smartphone className="mr-2 h-4 w-4" /> M-Pesa</Button>
-                <Button variant="outline" onClick={() => handleCheckout('Card')}><CreditCard className="mr-2 h-4 w-4" /> Card</Button>
-                <Button variant="secondary" onClick={() => toast({ title: 'Layaway not implemented' })}>Layaway</Button>
+                <Button variant="outline" onClick={() => handleCheckout('Cash')} disabled={cart.length === 0}><Banknote className="mr-2 h-4 w-4" /> Cash</Button>
+                <Button variant="outline" onClick={() => handleCheckout('M-Pesa')} disabled={cart.length === 0}><Smartphone className="mr-2 h-4 w-4" /> M-Pesa</Button>
+                <Button variant="outline" onClick={() => handleCheckout('Card')} disabled={cart.length === 0}><CreditCard className="mr-2 h-4 w-4" /> Card</Button>
+                <Button variant="secondary" onClick={() => router.push('/dashboard/layaways/new')} disabled={cart.length === 0}>Layaway</Button>
               </div>
-              <Button size="lg" className="w-full" onClick={() => handleCheckout('Card')}>Checkout</Button>
+              <Button size="lg" className="w-full" onClick={() => handleCheckout('Card')} disabled={cart.length === 0}>Checkout</Button>
             </CardContent>
           </Card>
         </div>
@@ -212,11 +246,11 @@ export default function POSPage() {
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h3 className="font-bold text-center mb-2">Customer Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} />
+                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
                         </div>
                         <div className="page-break-before">
                           <h3 className="font-bold text-center mb-2">Store Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} />
+                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
                         </div>
                       </div>
                   )}
@@ -230,6 +264,3 @@ export default function POSPage() {
     </>
   );
 }
-
-
-    
