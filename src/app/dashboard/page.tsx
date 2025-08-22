@@ -1,12 +1,7 @@
-import Link from 'next/link';
-import {
-  ArrowUpRight,
-  Boxes,
-  CircleDollarSign,
-  ClipboardList,
-  Coins,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+
+"use client";
+
+import * as React from 'react';
 import {
   Card,
   CardContent,
@@ -15,124 +10,134 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { mockSales, mockLayaways, mockProducts } from '@/lib/mock-data';
-import { SalesOverviewChart } from './_components/sales-overview-chart';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { mockSales } from '@/lib/mock-data';
+import { SalesTrendChart } from './_components/sales-trend-chart';
+import { TopSellingProductsChart } from './_components/top-selling-products-chart';
+import { SalesByCategoryChart } from './_components/sales-by-category-chart';
 
 export default function Dashboard() {
+  const [dateRange, setDateRange] = React.useState('this-month');
+
+  // --- KPI Calculations (based on mock data) ---
+  const todaysSales = mockSales
+    .filter(s => new Date(s.date).toDateString() === new Date().toDateString())
+    .reduce((acc, sale) => acc + sale.total, 0);
+
   const totalRevenue = mockSales.reduce((acc, sale) => acc + sale.total, 0);
-  const lowStockItems = mockProducts.filter(p => p.stock < p.lowStockThreshold).length;
+  const monthlyTarget = 500000;
+  const monthlyProgress = (totalRevenue / monthlyTarget) * 100;
+  
+  const transactionsToday = mockSales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length;
+  const averageTransactionValue = totalRevenue / mockSales.length;
+
 
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8">
+      {/* --- Filters --- */}
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <h1 className="text-2xl font-bold">Executive Dashboard</h1>
+        <div className="flex items-center gap-2 ml-auto">
+           <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select date range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="this-quarter">This Quarter</SelectItem>
+              <SelectItem value="this-year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+           <Select>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Payment Method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="cash">Cash</SelectItem>
+              <SelectItem value="mpesa">M-Pesa</SelectItem>
+              <SelectItem value="card">Card</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* --- KPIs Banner --- */}
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Ksh {totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              +{mockSales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              +180.1% from last week
-            </p>
+            <div className="text-3xl font-bold">KSh {todaysSales.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Layaways</CardTitle>
-            <Coins className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Target</CardTitle>
+             <CardDescription>Target: KSh {monthlyTarget.toLocaleString()}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockLayaways.filter(l => l.status === 'Pending').length}</div>
-            <p className="text-xs text-muted-foreground">+19% from last month</p>
+            <div className="text-3xl font-bold">{monthlyProgress.toFixed(1)}%</div>
+            <Progress value={monthlyProgress} className="mt-2 h-2" />
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Transaction Value</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">KSh {averageTransactionValue.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-            <Boxes className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Transactions Today</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lowStockItems}</div>
-            <p className="text-xs text-muted-foreground">
-              Items needing reorder
-            </p>
+            <div className="text-3xl font-bold">{transactionsToday}</div>
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+         {/* --- Top Selling Products --- */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Top Selling Items - This Month</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <TopSellingProductsChart />
+            </CardContent>
+        </Card>
+        {/* --- Sales by Category --- */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Sales by Category</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <SalesByCategoryChart />
+            </CardContent>
+        </Card>
+      </div>
+
+       {/* --- Sales Over Time --- */}
+      <Card className="col-span-full">
           <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
-            <CardDescription>
-              An overview of your sales performance for the last 6 months.
-            </CardDescription>
+            <CardTitle>Monthly Sales Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <SalesOverviewChart />
+            <SalesTrendChart />
           </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center">
-            <div className="grid gap-2">
-              <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>
-                Recent sales from your store.
-              </CardDescription>
-            </div>
-            <Button asChild size="sm" className="ml-auto gap-1">
-              <Link href="/dashboard/transactions">
-                View All
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockSales.slice(0, 5).map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell>
-                      <div className="font-medium">{sale.customerName}</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        {sale.paymentMethod}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">Ksh {sale.total.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 }
