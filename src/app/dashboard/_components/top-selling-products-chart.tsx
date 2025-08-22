@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -13,8 +13,8 @@ const topProductsData = [
   { name: 'Floral Tea Dress', revenue: 59990 },
   { name: 'Leather Ankle Boots', revenue: 48000 },
   { name: 'Summer Maxi Dress', revenue: 32500 },
-  { name: 'Premium Bibs', revenue: 25000 }, // Added example
-  { name: 'Baby Carrier X', revenue: 22000 }, // Added example
+  { name: 'Premium Bibs', revenue: 25000 },
+  { name: 'Baby Carrier X', revenue: 22000 },
 ];
 
 export function TopSellingProductsChart() {
@@ -26,7 +26,7 @@ export function TopSellingProductsChart() {
         margin={{ top: 5, right: 20, left: 30, bottom: 5 }}
       >
         <CartesianGrid horizontal={false} />
-        <XAxis type="number" dataKey="revenue" tickFormatter={(value) => `KSh ${value / 1000}k`} />
+        <XAxis type="number" dataKey="revenue" tickFormatter={(value) => `KSh ${Number(value) / 1000}k`} />
         <YAxis
           dataKey="name"
           type="category"
@@ -38,7 +38,7 @@ export function TopSellingProductsChart() {
         <Tooltip
           cursor={{ fill: 'hsl(var(--muted))' }}
           content={<ChartTooltipContent
-             formatter={(value) => `KSh ${value.toLocaleString()}`}
+             formatter={(value) => `KSh ${Number(value).toLocaleString()}`}
              indicator="dot"
           />}
         />

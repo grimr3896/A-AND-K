@@ -35,7 +35,7 @@ export default function Dashboard() {
   const monthlyProgress = (totalRevenue / monthlyTarget) * 100;
   
   const transactionsToday = mockSales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length;
-  const averageTransactionValue = totalRevenue > 0 && mockSales.length > 0 ? totalRevenue / mockSales.length : 0;
+  const averageTransactionValue = mockSales.length > 0 ? totalRevenue / mockSales.length : 0;
 
 
   return (
@@ -108,18 +108,16 @@ export default function Dashboard() {
         </Card>
       </div>
       
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-         {/* --- Top Selling Products --- */}
-        <Card>
-            <CardHeader>
-                <CardTitle>Top Selling Items - This Month</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <TopSellingProductsChart />
-            </CardContent>
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-5">
+        <Card className="xl:col-span-3">
+          <CardHeader>
+            <CardTitle>Monthly Sales Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SalesTrendChart />
+          </CardContent>
         </Card>
-        {/* --- Sales by Category --- */}
-        <Card>
+        <Card className="xl:col-span-2">
             <CardHeader>
                 <CardTitle>Sales by Category</CardTitle>
             </CardHeader>
@@ -129,13 +127,12 @@ export default function Dashboard() {
         </Card>
       </div>
 
-       {/* --- Sales Over Time --- */}
-      <Card className="col-span-full">
+       <Card className="col-span-full">
           <CardHeader>
-            <CardTitle>Monthly Sales Trend</CardTitle>
+            <CardTitle>Top Selling Items - This Month</CardTitle>
           </CardHeader>
           <CardContent>
-            <SalesTrendChart />
+            <TopSellingProductsChart />
           </CardContent>
       </Card>
     </div>
