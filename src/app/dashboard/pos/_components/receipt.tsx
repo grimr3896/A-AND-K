@@ -29,12 +29,12 @@ export function Receipt({ cart, subtotal, tax, total, paymentMethod, amountRecei
                     <React.Fragment key={item.id}>
                         <div className="flex justify-between">
                             <span>{item.name} x{item.quantity}</span>
-                            <span>Ksh {(item.currentPrice * item.quantity).toFixed(2)}</span>
+                            <span>Ksh {(item.agreedPrice * item.quantity).toFixed(2)}</span>
                         </div>
-                        {item.currentPrice !== item.price && (
+                        {item.agreedPrice !== item.price && (
                              <div className="flex justify-between pl-4 text-xs">
                                 <span>(Original: Ksh {item.price.toFixed(2)})</span>
-                                <span className="text-green-600">-{((item.price - item.currentPrice) * item.quantity).toFixed(2)}</span>
+                                <span className="text-green-600">-{((item.price - item.agreedPrice) * item.quantity).toFixed(2)}</span>
                             </div>
                         )}
                     </React.Fragment>
@@ -79,3 +79,5 @@ export function Receipt({ cart, subtotal, tax, total, paymentMethod, amountRecei
         </div>
     );
 }
+
+    

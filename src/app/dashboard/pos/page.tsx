@@ -24,7 +24,9 @@ import { Separator } from '@/components/ui/separator';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, UserTie } from 'lucide-react';
+import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, UserTie, CreditCard, Smartphone, DollarSign, StickyNote } from 'lucide-react';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Receipt } from './_components/receipt';
 
 type CartItem = {
     id: string;
@@ -33,6 +35,8 @@ type CartItem = {
     agreedPrice: number;
     stock: number;
     category: string;
+    price: number; // original price
+    minPrice: number;
 };
 
 type AgreementItem = {
@@ -43,10 +47,24 @@ type AgreementItem = {
     agreedPrice: number;
 };
 
+type CompletedSale = {
+    cart: CartItem[];
+    subtotal: number;
+    tax: number;
+    total: number;
+    paymentMethod: string;
+    amountReceived: number;
+    changeDue: number;
+}
+
 export default function POSPage() {
     const { toast } = useToast();
     const [cart, setCart] = React.useState<CartItem[]>([]);
     const [agreementTable, setAgreementTable] = React.useState<AgreementItem[]>([]);
+    const [amountReceived, setAmountReceived] = React.useState<number>(0);
+    const [paymentMethod, setPaymentMethod] = React.useState<string>('Cash');
+    const [completedSale, setCompletedSale] = React.useState<CompletedSale | null>(null);
+    const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
 
     const productIcons: { [key: string]: React.ReactNode } = {
         'Dresses': <Shirt />,
@@ -54,7 +72,7 @@ export default function POSPage() {
         'Shirts': <Shirt />,
         'Shoes': <Footprints />,
         'Accessories': <Mouse />,
-        'Tie': <Shirt />,
+        'Tie': <UserTie />,
         'Default': <ShoppingCart />
     };
 
@@ -78,6 +96,8 @@ export default function POSPage() {
                     agreedPrice: product.price, 
                     stock: product.stock,
                     category: product.category,
+                    price: product.price,
+                    minPrice: product.minPrice,
                 }]);
             } else {
                  toast({ variant: 'destructive', title: 'Out of Stock', description: `${product.name} is out of stock.` });
@@ -109,25 +129,33 @@ export default function POSPage() {
 
 
     const handlePriceChange = (productId: string, newPriceStr: string) => {
-        const newPrice = parseFloat(newPriceStr);
-        let finalPrice = newPrice;
+        let newPrice = parseFloat(newPriceStr);
         
         const agreementItem = agreementTable.find(a => a.id === productId);
         if(!agreementItem) return;
 
-        if (isNaN(newPrice) || newPrice < agreementItem.minPrice) {
-            finalPrice = agreementItem.minPrice;
+        if (isNaN(newPrice)) {
+            newPrice = agreementItem.agreedPrice; // Keep old price if input is invalid
+        }
+
+        if (newPrice < agreementItem.minPrice) {
+            toast({
+                variant: 'destructive',
+                title: 'Price Alert',
+                description: `Price for ${agreementItem.name} cannot be below minimum of Ksh ${agreementItem.minPrice.toFixed(2)}`,
+            });
+            newPrice = agreementItem.minPrice;
         }
 
         setAgreementTable(currentTable => 
             currentTable.map(item =>
-                item.id === productId ? { ...item, agreedPrice: finalPrice } : item
+                item.id === productId ? { ...item, agreedPrice: newPrice } : item
             )
         );
 
         setCart(currentCart => 
             currentCart.map(item => 
-                item.id === productId ? { ...item, agreedPrice: finalPrice } : item
+                item.id === productId ? { ...item, agreedPrice: newPrice } : item
             )
         );
     };
@@ -156,26 +184,45 @@ export default function POSPage() {
             return newCart;
         });
     };
+    
+    const subtotal = React.useMemo(() => cart.reduce((acc, item) => acc + item.agreedPrice * item.quantity, 0), [cart]);
+    const taxRate = 0.08;
+    const tax = subtotal * taxRate;
+    const total = subtotal + tax;
+    const changeDue = amountReceived - total;
 
     const handleCheckout = () => {
         if(cart.length === 0) {
             toast({ variant: 'destructive', title: 'Cart Empty', description: 'Please add products to the cart.' });
             return;
         }
+        if(amountReceived < total) {
+            toast({ variant: 'destructive', title: 'Insufficient Amount', description: 'Amount received is less than the total.' });
+            return;
+        }
 
-        toast({
-           title: 'Checkout Successful!',
-           description: `Sale complete. Total: Ksh ${total.toFixed(2)}`
-        });
+        const saleData: CompletedSale = {
+            cart,
+            subtotal,
+            tax,
+            total,
+            paymentMethod,
+            amountReceived,
+            changeDue
+        };
+
+        setCompletedSale(saleData);
+        setIsReceiptOpen(true);
+
+        // Reset state for next sale
         setCart([]);
         setAgreementTable([]);
+        setAmountReceived(0);
+        setPaymentMethod('Cash');
     };
 
-    const subtotal = React.useMemo(() => cart.reduce((acc, item) => acc + item.agreedPrice * item.quantity, 0), [cart]);
-    const total = subtotal; // Assuming no tax for now
-    const isCheckoutDisabled = cart.length === 0;
-
     return (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
             {/* LEFT COLUMN */}
             <div className="flex flex-col gap-4">
@@ -241,14 +288,16 @@ export default function POSPage() {
                 </Card>
             </div>
 
-            {/* RIGHT COLUMN (CART & PENDING) */}
+            {/* RIGHT COLUMN (CART) */}
             <div className="flex flex-col gap-4">
                 <Card className="flex flex-col flex-grow">
                      <CardHeader>
-                        <CardTitle>Cart</CardTitle>
-                        <CardDescription>
-                            {cart.reduce((acc, item) => acc + item.quantity, 0)} items
-                        </CardDescription>
+                        <div className="flex justify-between items-center">
+                            <CardTitle>Cart</CardTitle>
+                            <CardDescription>
+                                {cart.reduce((acc, item) => acc + item.quantity, 0)} items
+                            </CardDescription>
+                        </div>
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto pr-2">
                         {cart.length > 0 ? (
@@ -258,7 +307,7 @@ export default function POSPage() {
                                         <div className="flex-grow">
                                             <p className="font-semibold">{item.name}</p>
                                             <p className="text-sm text-primary">
-                                               {item.quantity} x Ksh {item.agreedPrice.toFixed(2)}
+                                               Ksh {item.agreedPrice.toFixed(2)}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -290,14 +339,45 @@ export default function POSPage() {
                                     <span>Subtotal</span>
                                     <span className="font-mono">Ksh {subtotal.toFixed(2)}</span>
                                 </div>
+                                <div className="flex justify-between text-sm">
+                                    <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
+                                    <span className="font-mono">Ksh {tax.toFixed(2)}</span>
+                                </div>
                                 <Separator />
                                 <div className="flex justify-between font-bold text-lg">
                                     <span>Total</span>
                                     <span className="font-mono">Ksh {total.toFixed(2)}</span>
                                 </div>
                             </div>
-                            <Button size="lg" className="w-full" disabled={isCheckoutDisabled} onClick={handleCheckout}>
-                                Cashout
+                            <Separator />
+                             <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium">Amount Received</label>
+                                    <Input 
+                                        type="number" 
+                                        placeholder="Enter amount customer paid" 
+                                        value={amountReceived || ''}
+                                        onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)}
+                                    />
+                                </div>
+                                {changeDue > 0 && (
+                                    <div className="flex justify-between font-bold text-primary text-lg">
+                                        <span>Change Due</span>
+                                        <span>Ksh {changeDue.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">Payment Method</label>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                                       <Button variant={paymentMethod === 'Cash' ? 'default' : 'outline'} onClick={() => setPaymentMethod('Cash')}><DollarSign/>Cash</Button>
+                                       <Button variant={paymentMethod === 'M-Pesa' ? 'default' : 'outline'} onClick={() => setPaymentMethod('M-Pesa')}><Smartphone/>M-Pesa</Button>
+                                       <Button variant={paymentMethod === 'Card' ? 'default' : 'outline'} onClick={() => setPaymentMethod('Card')}><CreditCard/>Card</Button>
+                                       <Button variant={paymentMethod === 'Layaway' ? 'default' : 'outline'} onClick={() => setPaymentMethod('Layaway')}><StickyNote/>Layaway</Button>
+                                    </div>
+                                </div>
+                             </div>
+                            <Button size="lg" className="w-full" disabled={cart.length === 0} onClick={handleCheckout}>
+                                Checkout
                             </Button>
                         </CardFooter>
                     )}
@@ -316,6 +396,21 @@ export default function POSPage() {
                 </Card>
             </div>
         </div>
+
+        {completedSale && (
+             <AlertDialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Transaction Complete</AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <Receipt {...completedSale} />
+                    <AlertDialogAction onClick={() => setIsReceiptOpen(false)}>
+                        New Sale
+                    </AlertDialogAction>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
+        </>
     );
 }
 

@@ -15,11 +15,15 @@ export type Product = {
   description?: string;
 };
 
-export type CartItem = Product & {
+export type CartItem = {
+  id: string;
+  name: string;
   quantity: number;
-  currentPrice: number; // The price for this transaction, which can be adjusted
-  originalPrice: number; // The standard price before any adjustments
-  managerOverride?: boolean;
+  agreedPrice: number; // The price for this transaction, which can be adjusted
+  price: number; // The standard price before any adjustments
+  stock: number;
+  category: string;
+  minPrice: number;
 };
 
 export type Sale = {
@@ -70,5 +74,7 @@ export type User = {
     username: string;
     role: UserRole;
 }
+
+    
 
     
