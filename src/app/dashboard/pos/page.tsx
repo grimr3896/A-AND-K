@@ -26,10 +26,13 @@ export default function POSPage() {
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [agreedPrices, setAgreedPrices] = React.useState<Record<string, number>>({});
 
-  const subtotal = cart.reduce((acc, item) => {
-      const price = agreedPrices[item.id] ?? item.price;
-      return acc + price * item.quantity;
-  }, 0);
+  const subtotal = React.useMemo(() => 
+    cart.reduce((acc, item) => {
+        const price = agreedPrices[item.id] ?? item.price;
+        return acc + price * item.quantity;
+    }, 0)
+  , [cart, agreedPrices]);
+  
   const taxAmount = subtotal * 0.08;
   const total = subtotal + taxAmount;
 
@@ -46,9 +49,8 @@ export default function POSPage() {
           return prevCart;
         }
       }
-      // Set initial agreed price to standard price when adding
       setAgreedPrices(prev => ({...prev, [product.id]: product.price}));
-      return [...prevCart, { ...product, quantity: 1, currentPrice: product.price }];
+      return [...prevCart, { ...product, quantity: 1, currentPrice: product.price, originalPrice: product.price }];
     });
   };
 
@@ -68,21 +70,28 @@ export default function POSPage() {
     if (!product) return;
 
     if (isNaN(newPrice)) {
-        setAgreedPrices(prev => ({...prev, [productId]: 0}));
+        setAgreedPrices(prev => ({...prev, [productId]: product.price})); // Revert to original price if input is invalid
         return;
     }
-
-    if (newPrice < product.minPrice) {
-         if (!hasRole(['Admin', 'Manager'])) {
-            toast({
-                variant: 'destructive',
-                title: 'Manager Approval Required',
-                description: `Price for ${product.name} is below the minimum allowed.`,
-            });
-         }
-    }
+    
     setAgreedPrices(prev => ({...prev, [productId]: newPrice}));
   };
+
+  React.useEffect(() => {
+    const priceErrorFound = cart.some(item => {
+        const agreedPrice = agreedPrices[item.id];
+        return agreedPrice < item.minPrice && !hasRole(['Admin', 'Manager']);
+    });
+
+    if (priceErrorFound) {
+      toast({
+        variant: 'destructive',
+        title: 'Manager Approval Required',
+        description: 'One or more items are priced below the minimum allowed.',
+      });
+    }
+  }, [agreedPrices, cart, hasRole, toast]);
+
 
   const isCheckoutDisabled = cart.length === 0;
 
@@ -111,9 +120,9 @@ export default function POSPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-full">
       {/* Left Side: Product Selection */}
-      <Card className="flex flex-col">
+      <Card className="flex flex-col lg:col-span-3">
           <CardHeader>
             <CardTitle>Product</CardTitle>
           </CardHeader>
@@ -139,7 +148,7 @@ export default function POSPage() {
       </Card>
       
       {/* Right Side: Agreement, Cart, Pending */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 lg:col-span-2">
         <Card className="flex-grow flex flex-col">
             <CardHeader>
                  <CardTitle>Price agreement</CardTitle>
@@ -158,7 +167,7 @@ export default function POSPage() {
                         </thead>
                         <tbody>
                             {cart.length > 0 ? cart.map(item => {
-                                const agreedPrice = agreedPrices[item.id] ?? 0;
+                                const agreedPrice = agreedPrices[item.id] ?? item.price;
                                 const isBelowMin = agreedPrice < item.minPrice && !hasRole(['Admin', 'Manager']);
                                 return (
                                     <tr key={item.id} className="border-b">
@@ -170,7 +179,7 @@ export default function POSPage() {
                                                 type="number" 
                                                 value={agreedPrices[item.id] ?? ''}
                                                 onChange={(e) => handleAgreedPriceChange(item.id, e.target.value)}
-                                                className={`h-8 w-28 text-right ${isBelowMin ? 'border-destructive ring-destructive ring-2' : ''}`}
+                                                className={`h-8 w-28 text-right ${isBelowMin ? 'border-destructive ring-2 ring-destructive' : ''}`}
                                             />
                                         </td>
                                         <td className="p-2">
@@ -197,26 +206,21 @@ export default function POSPage() {
                 </CardHeader>
                 <CardContent>
                      <ul className="space-y-2 text-sm">
-                        {cart.map(item => (
-                             <li key={item.id} className="flex justify-between">
-                                <span>{item.name} {item.quantity > 1 ? `x${item.quantity}`: ''}</span>
-                                <span className="font-mono">Ksh {(agreedPrices[item.id] * item.quantity).toFixed(2)}</span>
-                             </li>
-                        ))}
+                        {cart.map(item => {
+                            const agreedPrice = agreedPrices[item.id] ?? item.price;
+                            return (
+                                 <li key={item.id} className="flex justify-between">
+                                    <span>{item.name} x{item.quantity}</span>
+                                    <span className="font-mono">@ {(agreedPrice).toFixed(2)}</span>
+                                 </li>
+                            )
+                        })}
                     </ul>
                      <Separator className="my-2" />
                      <div className="space-y-1 font-medium">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-lg font-bold border-t pt-1 mt-1">
                             <span>Subtotal</span>
                             <span className="font-mono">Ksh {subtotal.toFixed(2)}</span>
-                        </div>
-                         <div className="flex justify-between text-muted-foreground text-xs">
-                            <span>Tax (8%)</span>
-                            <span className="font-mono">Ksh {taxAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-lg font-bold border-t pt-1 mt-1">
-                            <span>Total</span>
-                            <span className="font-mono">Ksh {total.toFixed(2)}</span>
                         </div>
                     </div>
                 </CardContent>
