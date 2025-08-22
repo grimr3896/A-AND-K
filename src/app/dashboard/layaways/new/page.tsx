@@ -201,8 +201,17 @@ export default function NewLayawayPage() {
                     <span>Ksh {totalPaid.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-semibold">
-                    <span>Remaining Balance:</span>
-                    <span>Ksh {(totalAmount - totalPaid).toFixed(2)}</span>
+                    {totalPaid >= totalAmount ? (
+                      <>
+                        <span className="text-primary">Change Due:</span>
+                        <span className="text-primary">Ksh {(totalPaid - totalAmount).toFixed(2)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Remaining Balance:</span>
+                        <span>Ksh {(totalAmount - totalPaid).toFixed(2)}</span>
+                      </>
+                    )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                     <Button size="lg" variant="outline" onClick={() => setIsAddPaymentOpen(true)}>
