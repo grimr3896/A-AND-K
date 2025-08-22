@@ -26,21 +26,11 @@ import Image from 'next/image';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { MinusCircle, PlusCircle, Printer, Trash2, Edit, RotateCcw, PauseCircle, CornerUpLeft, AlertCircle } from 'lucide-react';
+import { MinusCircle, PlusCircle, Printer, Trash2, Edit, RotateCcw, PauseCircle, CornerUpLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { AdjustPriceDialog } from './_components/adjust-price-dialog';
 import { Receipt } from './_components/receipt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-
 
 type PendingCart = {
   id: string;
@@ -56,11 +46,10 @@ export default function POSPage() {
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = React.useState('Cash');
   const [amountReceived, setAmountReceived] = React.useState(0);
+  const [isPriceDialogOpen, setIsPriceDialogOpen] = React.useState(false);
+  const [itemToAdjust, setItemToAdjust] = React.useState<CartItem | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
   const [pendingCarts, setPendingCarts] = React.useState<PendingCart[]>([]);
-  const [isManagerAlertOpen, setIsManagerAlertOpen] = React.useState(false);
-  const [managerPassword, setManagerPassword] = React.useState('');
-  const [pendingPriceChange, setPendingPriceChange] = React.useState<{itemId: string, newPrice: number} | null>(null);
 
   const TAX_RATE = 0.08; // 8%
 
@@ -70,7 +59,7 @@ export default function POSPage() {
   const changeDue = amountReceived - total;
   const balanceRemaining = total - amountReceived;
   
-  const isCashoutDisabled = cart.some(item => item.currentPrice < item.minPrice) || cart.length === 0 || amountReceived < total;
+  const isCashoutDisabled = cart.length === 0 || amountReceived < total;
 
 
   const addToCart = (product: Product) => {
@@ -112,39 +101,13 @@ export default function POSPage() {
     });
   };
 
-  const handlePriceChange = (itemId: string, newPrice: number) => {
-     setCart(cart.map(item => item.id === itemId ? {...item, currentPrice: newPrice} : item));
-  }
-  
-  const handleAgreedPriceBlur = (item: CartItem, agreedPrice: number) => {
-     if (agreedPrice < item.minPrice) {
-        if (hasRole(['Admin', 'Manager'])) {
-            setPendingPriceChange({ itemId: item.id, newPrice: agreedPrice });
-            setIsManagerAlertOpen(true);
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Manager Approval Required',
-                description: 'Price is below minimum. Please ask a manager to approve.'
-            })
-        }
-     } else {
-        handlePriceChange(item.id, agreedPrice);
-     }
-  }
+  const handleOpenPriceDialog = (item: CartItem) => {
+    setItemToAdjust(item);
+    setIsPriceDialogOpen(true);
+  };
 
-  const handleManagerOverride = () => {
-    if (managerPassword === 'ALEXA') { // In a real app, verify this securely
-      if (pendingPriceChange) {
-        handlePriceChange(pendingPriceChange.itemId, pendingPriceChange.newPrice);
-        toast({ title: 'Manager Override Approved', description: 'Price has been updated.' });
-      }
-      setIsManagerAlertOpen(false);
-      setManagerPassword('');
-      setPendingPriceChange(null);
-    } else {
-      toast({ variant: 'destructive', title: 'Authentication Failed', description: 'Incorrect manager password.' });
-    }
+  const handlePriceAdjust = (itemId: string, newPrice: number, reason: string) => {
+    setCart(cart.map(item => item.id === itemId ? {...item, currentPrice: newPrice, adjustmentReason: reason} : item));
   };
 
   const handleCheckout = () => {
@@ -155,10 +118,6 @@ export default function POSPage() {
     if (amountReceived < total) {
       toast({ variant: 'destructive', title: 'Insufficient Payment', description: `Amount received is less than the total of Ksh ${total.toFixed(2)}.` });
       return;
-    }
-    if (cart.some(item => item.currentPrice < item.minPrice && !hasRole(['Admin', 'Manager']))){
-        toast({ variant: 'destructive', title: 'Manager Approval Required', description: 'One or more items are below minimum price.'});
-        return;
     }
     // In a real app, this is where you'd save the sale to the database.
     setIsReceiptOpen(true);
@@ -282,9 +241,9 @@ export default function POSPage() {
         <div className="grid auto-rows-max items-start gap-4">
           <Card className="sticky top-6">
             <CardHeader>
-              <CardTitle>Price Agreement</CardTitle>
+              <CardTitle>Cart</CardTitle>
               <CardDescription>
-                Adjust quantities and prices for the current sale.
+                Manage quantities and prices for the current sale.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -294,9 +253,8 @@ export default function POSPage() {
                     <TableRow>
                       <TableHead>Product</TableHead>
                       <TableHead>Qty</TableHead>
-                      <TableHead>SP</TableHead>
-                      <TableHead>MM</TableHead>
-                      <TableHead>Agreed</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -304,22 +262,35 @@ export default function POSPage() {
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
-                            className="w-12 h-8 text-center"
-                          />
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                               <MinusCircle className="h-4 w-4" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
+                              className="w-12 h-8 text-center"
+                            />
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                                <PlusCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
-                        <TableCell className="font-mono text-muted-foreground">{item.price.toFixed(0)}</TableCell>
-                        <TableCell className="font-mono text-muted-foreground">{item.minPrice.toFixed(0)}</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            defaultValue={item.currentPrice.toFixed(2)}
-                             onBlur={(e) => handleAgreedPriceBlur(item, parseFloat(e.target.value) || 0)}
-                            className={`w-24 h-8 text-right font-mono ${item.currentPrice < item.minPrice ? 'border-destructive ring-2 ring-destructive/50' : ''}`}
-                          />
+                        <TableCell className="text-right font-mono">
+                           {item.currentPrice.toFixed(2)}
+                           {item.currentPrice !== item.price && (
+                             <p className="text-xs text-muted-foreground line-through">{item.price.toFixed(2)}</p>
+                           )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <Button variant="outline" size="sm" onClick={() => handleOpenPriceDialog(item)}>
+                                <Edit className="h-3 w-3 mr-1" />
+                                Adjust
+                            </Button>
+                            <Button variant="ghost" size="icon" className="ml-1 text-destructive" onClick={() => removeFromCart(item.id)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -375,7 +346,7 @@ export default function POSPage() {
                   </div>
                 </div>
                  {amountReceived > 0 && (
-                  <div className={`flex justify-between font-bold text-base p-2 rounded-md ${changeDue >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                   <div className={`flex justify-between font-bold text-base p-2 rounded-md ${changeDue >= 0 ? 'text-primary' : 'text-destructive'}`}>
                     {changeDue >= 0 ? (
                       <>
                         <span>Change Due:</span>
@@ -404,6 +375,15 @@ export default function POSPage() {
           </Card>
         </div>
       </div>
+
+      {itemToAdjust && (
+        <AdjustPriceDialog
+          isOpen={isPriceDialogOpen}
+          onOpenChange={setIsPriceDialogOpen}
+          item={itemToAdjust}
+          onPriceAdjust={handlePriceAdjust}
+        />
+      )}
       
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="max-w-sm">
@@ -426,28 +406,6 @@ export default function POSPage() {
           </div>
         </DialogContent>
       </Dialog>
-      
-      <AlertDialog open={isManagerAlertOpen} onOpenChange={setIsManagerAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Manager Override Required</AlertDialogTitle>
-            <AlertDialogDescription>
-              The price is below the minimum allowed. Please enter manager password to approve.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Input
-            type="password"
-            placeholder="Manager Password"
-            value={managerPassword}
-            onChange={(e) => setManagerPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleManagerOverride()}
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setManagerPassword(''); setPendingPriceChange(null); }}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleManagerOverride}>Approve</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
