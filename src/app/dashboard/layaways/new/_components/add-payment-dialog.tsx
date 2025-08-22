@@ -42,6 +42,9 @@ type AddPaymentDialogProps = {
 export function AddPaymentDialog({ isOpen, onOpenChange, onAddPayment }: AddPaymentDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+        amount: 0,
+    }
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
