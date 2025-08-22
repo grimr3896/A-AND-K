@@ -289,10 +289,9 @@ export default function POSPage() {
                 changeDue={changeDue}
             />
             <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => window.print()}>
-                    <Printer className="mr-2 h-4 w-4" /> Print
+                <Button variant="outline" onClick={() => { window.print(); handleNewSale(); }}>
+                    <Printer className="mr-2 h-4 w-4" /> Print & New Sale
                 </Button>
-                <Button onClick={handleNewSale}>New Sale</Button>
             </div>
         </DialogContent>
       </Dialog>
