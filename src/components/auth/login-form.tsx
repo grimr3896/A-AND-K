@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { mockUsers } from '@/lib/mock-data';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -44,11 +45,11 @@ export function LoginForm() {
 
     // Simulate API call
     setTimeout(() => {
-      // In a real app, you would fetch the latest password to compare against.
-      // For this prototype, we'll use the hardcoded one, but recognize that
-      // if it's changed on the business info page, this won't reflect it
-      // without a page reload or more complex state management.
-      if (values.password === adminPassword) {
+      const user = mockUsers.find(u => u.username === values.username);
+
+      if (user && values.password === adminPassword) {
+        // In a real app, you'd use a more secure session management system.
+        localStorage.setItem('loggedInUser', JSON.stringify(user));
         toast({
           title: 'Login Successful',
           description: `Welcome back, ${values.username}!`,
@@ -75,7 +76,7 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., admin" {...field} />
+                <Input placeholder="e.g., admin, manager, staff" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

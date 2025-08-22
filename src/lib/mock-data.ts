@@ -1,13 +1,13 @@
-import type { Product, Sale, Layaway, Customer, AuditLog } from './types';
+import type { Product, Sale, Layaway, Customer, AuditLog, User } from './types';
 
 export const mockProducts: Product[] = [
-  { id: 'PROD001', name: 'Floral Tea Dress', sku: 'TD-FL-01', category: 'Dresses', stock: 12, price: 5999, lowStockThreshold: 5, cost: 3500, minPrice: 5500 },
-  { id: 'PROD002', name: 'Classic Blue Jeans', sku: 'JN-CL-01', category: 'Trousers', stock: 25, price: 7999, lowStockThreshold: 10, cost: 4500, minPrice: 7500 },
-  { id: 'PROD003', name: 'Linen Button-Up Shirt', sku: 'SH-LN-01', category: 'Shirts', stock: 4, price: 4500, lowStockThreshold: 5, cost: 2500, minPrice: 4000 },
-  { id: 'PROD004', name: 'Leather Ankle Boots', sku: 'BT-LT-01', category: 'Shoes', stock: 8, price: 12000, lowStockThreshold: 5, cost: 7000, minPrice: 11000 },
-  { id: 'PROD005', name: 'Wool-blend Scarf', sku: 'AC-WB-01', category: 'Accessories', stock: 30, price: 2550, lowStockThreshold: 10, cost: 1200, minPrice: 2200 },
-  { id: 'PROD006', name: 'Summer Maxi Dress', sku: 'TD-SM-02', category: 'Dresses', stock: 15, price: 6500, lowStockThreshold: 5, cost: 3800, minPrice: 6000 },
-  { id: 'PROD007', name: 'Cotton Chinos', sku: 'TR-CT-02', category: 'Trousers', stock: 18, price: 5500, lowStockThreshold: 10, cost: 3000, minPrice: 5000 },
+  { id: 'PROD001', name: 'Floral Tea Dress', sku: 'TD-FL-01', category: 'Dresses', stock: 12, price: 5999, lowStockThreshold: 5, cost: 3500, minPrice: 5500, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Fashion House', description: 'A beautiful floral tea dress for sunny days.' },
+  { id: 'PROD002', name: 'Classic Blue Jeans', sku: 'JN-CL-01', category: 'Trousers', stock: 25, price: 7999, lowStockThreshold: 10, cost: 4500, minPrice: 7500, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Denim Co', description: 'High-quality classic blue jeans.' },
+  { id: 'PROD003', name: 'Linen Button-Up Shirt', sku: 'SH-LN-01', category: 'Shirts', stock: 4, price: 4500, lowStockThreshold: 5, cost: 2500, minPrice: 4000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Casual Wear Inc', description: 'A comfortable linen shirt.' },
+  { id: 'PROD004', name: 'Leather Ankle Boots', sku: 'BT-LT-01', category: 'Shoes', stock: 8, price: 12000, lowStockThreshold: 5, cost: 7000, minPrice: 11000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Footwear Masters', description: 'Stylish and durable leather ankle boots.' },
+  { id: 'PROD005', name: 'Wool-blend Scarf', sku: 'AC-WB-01', category: 'Accessories', stock: 30, price: 2550, lowStockThreshold: 10, cost: 1200, minPrice: 2200, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Accessories Plus', description: 'A warm wool-blend scarf.' },
+  { id: 'PROD006', name: 'Summer Maxi Dress', sku: 'TD-SM-02', category: 'Dresses', stock: 15, price: 6500, lowStockThreshold: 5, cost: 3800, minPrice: 6000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Fashion House', description: 'A light and airy summer maxi dress.' },
+  { id: 'PROD007', name: 'Cotton Chinos', sku: 'TR-CT-02', category: 'Trousers', stock: 18, price: 5500, lowStockThreshold: 10, cost: 3000, minPrice: 5000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Denim Co', description: 'Comfortable and versatile cotton chinos.' },
 ];
 
 export const mockSales: Sale[] = [
@@ -51,3 +51,9 @@ export const productDetailsForAI = JSON.stringify([
   {"productId": "PROD003", "name": "Linen Button-Up Shirt", "currentStock": 4},
   {"productId": "PROD004", "name": "Leather Ankle Boots", "currentStock": 8},
 ], null, 2);
+
+export const mockUsers: User[] = [
+    { id: 'USER001', username: 'admin', role: 'Admin' },
+    { id: 'USER002', username: 'manager', role: 'Manager' },
+    { id: 'USER003', username: 'staff', role: 'Staff' },
+];

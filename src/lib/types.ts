@@ -8,6 +8,9 @@ export type Product = {
   lowStockThreshold: number;
   cost: number;
   minPrice: number;
+  imageUrl?: string;
+  supplier?: string;
+  description?: string;
 };
 
 export type CartItem = Product & {
@@ -48,3 +51,11 @@ export type AuditLog = {
   action: string;
   details: string;
 };
+
+export type UserRole = 'Admin' | 'Manager' | 'Staff';
+
+export type User = {
+    id: string;
+    username: string;
+    role: UserRole;
+}

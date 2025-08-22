@@ -14,7 +14,7 @@ export default function LoginPage() {
         </p>
         <LoginForm />
         <p className="px-8 text-center text-sm text-muted-foreground">
-          Admin access is restricted. Use the password configured in Business Info. Default is: KINGORCA
+          Enter a username (admin, manager, or staff) and the password. Default password is: KINGORCA
         </p>
       </div>
     </main>
