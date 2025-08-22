@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -47,10 +46,10 @@ export function Receipt({ cart, subtotal, tax, total, paymentMethod, amountRecei
                     <span>Subtotal</span>
                     <span>Ksh {subtotal.toFixed(2)}</span>
                 </div>
-                 <div className="flex justify-between">
-                    <span>Tax (8%)</span>
+                 {tax > 0 && <div className="flex justify-between">
+                    <span>Tax</span>
                     <span>Ksh {tax.toFixed(2)}</span>
-                </div>
+                </div>}
             </div>
             <Separator className="my-2 bg-black" />
             <div className="flex justify-between font-bold text-base">

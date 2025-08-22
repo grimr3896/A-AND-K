@@ -1,14 +1,12 @@
 
-
 "use client";
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MinusCircle, CreditCard, Smartphone, Banknote, Pencil } from 'lucide-react';
+import { PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
@@ -25,27 +23,18 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AdjustPriceDialog } from './_components/adjust-price-dialog';
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 export default function POSPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [showReceipt, setShowReceipt] = React.useState(false);
-  const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], subtotal: number, tax: number, total: number, paymentMethod: string, amountReceived: number, changeDue: number } | null>(null);
-  const [amountReceived, setAmountReceived] = React.useState(0);
-  const [isAdjustPriceOpen, setIsAdjustPriceOpen] = React.useState(false);
-  const [itemToAdjust, setItemToAdjust] = React.useState<CartItem | null>(null);
-
-  const TAX_RATE = 0.08; // 8%
+  const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], subtotal: number, total: number, paymentMethod: string, amountReceived: number, changeDue: number } | null>(null);
 
   const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
-
-  const balance = amountReceived - total;
-  
+  const total = subtotal; // No tax for now as per previous requests
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -60,52 +49,49 @@ export default function POSPage() {
           return prevCart;
         }
       }
-      // Add new item with original price as currentPrice
       return [...prevCart, { ...product, quantity: 1, currentPrice: product.price }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
+  const handleQuantityChange = (productId: string, change: number) => {
     setCart((prevCart) => {
-      return prevCart.reduce((acc, item) => {
-        if (item.id === productId) {
-          if (item.quantity > 1) {
-            acc.push({ ...item, quantity: item.quantity - 1 });
-          }
-        } else {
-          acc.push(item);
-        }
-        return acc;
-      }, [] as CartItem[]);
+        return prevCart.reduce((acc, item) => {
+            if (item.id === productId) {
+                const newQuantity = item.quantity + change;
+                if (newQuantity > 0 && newQuantity <= item.stock) {
+                    acc.push({ ...item, quantity: newQuantity });
+                } else if (newQuantity > item.stock) {
+                    toast({ variant: 'destructive', title: 'Out of Stock' });
+                    acc.push(item);
+                }
+                // if newQuantity is 0, item is removed
+            } else {
+                acc.push(item);
+            }
+            return acc;
+        }, [] as CartItem[]);
     });
   };
 
-  const handleOpenAdjustPrice = (item: CartItem) => {
-    setItemToAdjust(item);
-    setIsAdjustPriceOpen(true);
-  }
-
-  const handlePriceAdjust = (itemId: string, newPrice: number) => {
-    setCart(cart.map(item => item.id === itemId ? { ...item, currentPrice: newPrice } : item));
-    setIsAdjustPriceOpen(false);
-    setItemToAdjust(null);
+  const handlePriceChange = (productId: string, newPrice: number) => {
+      setCart(cart.map(item => item.id === productId ? { ...item, currentPrice: newPrice } : item));
   };
 
-  const handleCheckout = (paymentMethod: string) => {
+  const handleCheckout = () => {
     if (cart.length === 0) {
       toast({ variant: 'destructive', title: 'Empty Cart', description: 'Please add items to the cart before checkout.' });
       return;
     }
-     if (amountReceived < total) {
-      toast({ variant: 'destructive', title: 'Insufficient Payment', description: 'Amount received is less than the total.' });
+    const hasInvalidPrice = cart.some(item => item.currentPrice < item.minPrice);
+    if(hasInvalidPrice) {
+      toast({ variant: 'destructive', title: 'Invalid Price', description: 'One or more items have a price below the minimum. Please correct it.' });
       return;
     }
-    setLastTransaction({ cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue: balance });
+    setLastTransaction({ cart, subtotal, total, paymentMethod: 'Cash', amountReceived: total, changeDue: 0 });
     setShowReceipt(true);
     setCart([]);
-    setAmountReceived(0);
   };
-  
+
   const handlePrint = () => {
     const printContent = document.getElementById('receipt-section');
     const windowUrl = 'about:blank';
@@ -115,7 +101,6 @@ export default function POSPage() {
 
     if (printWindow && printContent) {
         printWindow.document.write('<html><head><title>Print Receipt</title>');
-        printWindow.document.write('<style>@media print { body { -webkit-print-color-adjust: exact; } .page-break-before { page-break-before: always; } }</style>');
         printWindow.document.write('</head><body>');
         printWindow.document.write(printContent.innerHTML);
         printWindow.document.write('</body></html>');
@@ -133,155 +118,157 @@ export default function POSPage() {
 
   return (
     <>
-      <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-5 print:hidden">
-        <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8 xl:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Products</CardTitle>
-              <CardDescription>Click on a product to add it to the cart.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {mockProducts.map((product) => (
-                  <Card key={product.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => addToCart(product)}>
-                    <CardContent className="p-2 flex flex-col items-center gap-2">
-                      <Image
-                        src={product.imageUrl || `https://placehold.co/150x150.png`}
-                        alt={product.name}
-                        width={150}
-                        height={150}
-                        className="rounded-md object-cover aspect-square"
-                        data-ai-hint="product image"
-                      />
-                      <div className="text-sm font-medium text-center">{product.name}</div>
-                      <div className="text-xs text-muted-foreground">Ksh {product.price.toFixed(2)}</div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        {/* Left Column */}
+        <div className="grid auto-rows-max items-start gap-4 lg:col-span-1 xl:col-span-2">
+            {/* Product Selection */}
+             <Card>
+                <CardHeader>
+                <CardTitle>Product</CardTitle>
+                <CardDescription>Click a product to add it to the price agreement table.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {mockProducts.map((product) => (
+                    <Card key={product.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => addToCart(product)}>
+                        <CardContent className="p-2 flex flex-col items-center gap-2">
+                        <Image
+                            src={product.imageUrl || `https://placehold.co/150x150.png`}
+                            alt={product.name}
+                            width={150}
+                            height={150}
+                            className="rounded-md object-cover aspect-square"
+                            data-ai-hint="product image"
+                        />
+                        <div className="text-sm font-medium text-center">{product.name}</div>
+                        <div className="text-xs text-muted-foreground">Ksh {product.price.toFixed(2)}</div>
+                        </CardContent>
+                    </Card>
+                    ))}
+                </div>
+                </CardContent>
+            </Card>
+            {/* Pending Transactions */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Pending</CardTitle>
+                </CardHeader>
+                <CardContent className="h-48 flex items-center justify-center text-muted-foreground">
+                    Suspended transactions will appear here.
+                </CardContent>
+            </Card>
         </div>
-        <div className="lg:col-span-1 xl:col-span-2">
-          <Card className="sticky top-6">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Cart</CardTitle>
-              <Badge variant="outline">{cart.reduce((acc, item) => acc + item.quantity, 0)} items</Badge>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="grid gap-2 min-h-[120px] max-h-[30vh] overflow-y-auto pr-2">
-                {cart.length > 0 ? (
-                  cart.map((item) => (
-                    <div key={item.id} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2">
-                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenAdjustPrice(item)}>
-                          <Pencil className="h-4 w-4 text-muted-foreground" />
-                       </Button>
-                      <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Ksh {item.currentPrice.toFixed(2)}
-                          {item.currentPrice !== item.price && (
-                             <span className="line-through ml-2 text-destructive/80">{item.price.toFixed(2)}</span>
-                          )}
+
+        {/* Right Column */}
+        <div className="grid auto-rows-max items-start gap-4 lg:col-span-1">
+            {/* Price Agreement */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Price agreement</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Product</TableHead>
+                                <TableHead>SP</TableHead>
+                                <TableHead>MM</TableHead>
+                                <TableHead>Agreed price</TableHead>
+                                <TableHead></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {cart.length > 0 ? cart.map(item => {
+                                const isInvalid = item.currentPrice < item.minPrice;
+                                return (
+                                    <TableRow key={item.id}>
+                                        <TableCell className="font-medium">{item.name}</TableCell>
+                                        <TableCell>{item.price.toFixed(2)}</TableCell>
+                                        <TableCell>{item.minPrice.toFixed(2)}</TableCell>
+                                        <TableCell>
+                                            <Input 
+                                                type="number"
+                                                value={item.currentPrice}
+                                                onChange={(e) => handlePriceChange(item.id, Number(e.target.value))}
+                                                className={cn("w-24", isInvalid ? "border-destructive focus-visible:ring-destructive" : "")}
+                                            />
+                                            {isInvalid && <p className="text-xs text-destructive mt-1">Below min.</p>}
+                                        </TableCell>
+                                        <TableCell>
+                                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(item.id, -item.quantity)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            }) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24">No products added.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+            {/* Cart */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Cart</CardTitle>
+                </CardHeader>
+                <CardContent className="min-h-32">
+                    {cart.map(item => (
+                        <div key={item.id} className="flex justify-between items-center mb-2">
+                             <div className="flex items-center gap-2">
+                                <span className="font-medium">{item.name}</span>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleQuantityChange(item.id, -1)}>
+                                    <MinusCircle className="h-3 w-3" />
+                                    </Button>
+                                    <span className="w-4 text-center text-sm">{item.quantity}</span>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleQuantityChange(item.id, 1)}>
+                                    <PlusCircle className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <span className="font-mono">
+                               @ {item.currentPrice.toFixed(2)}
+                            </span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.id)}>
-                          <MinusCircle className="h-4 w-4" />
-                        </Button>
-                        <span className="w-4 text-center">{item.quantity}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => addToCart(item)}>
-                          <PlusCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="text-right font-medium">
-                        Ksh {(item.currentPrice * item.quantity).toFixed(2)}
-                      </div>
+                    ))}
+                </CardContent>
+                <CardFooter className="flex-col items-stretch space-y-4">
+                     <Separator />
+                     <div className="flex justify-between font-bold text-lg">
+                        <span>Subtotal</span>
+                        <span>Ksh {subtotal.toFixed(2)}</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Cart is empty
-                  </div>
-                )}
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>Ksh {subtotal.toFixed(2)}</span>
-                </div>
-                 <div className="flex justify-between">
-                  <span>Tax ({(TAX_RATE * 100).toFixed(0)}%)</span>
-                  <span>Ksh {tax.toFixed(2)}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span>Ksh {total.toFixed(2)}</span>
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="amount-received">Amount Received</Label>
-                  <Input 
-                    id="amount-received" 
-                    type="number" 
-                    value={amountReceived}
-                    onChange={(e) => setAmountReceived(Number(e.target.value))}
-                    className="text-right font-mono text-lg h-12"
-                    disabled={cart.length === 0}
-                   />
-                </div>
-                 <div className={`flex justify-between font-bold text-lg ${balance >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                    <span>{balance >= 0 ? 'Change Due' : 'Balance Remaining'}</span>
-                    <span>Ksh {Math.abs(balance).toFixed(2)}</span>
-                  </div>
-              </div>
-              <Separator />
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => handleCheckout('Cash')} disabled={cart.length === 0}><Banknote className="mr-2 h-4 w-4" /> Cash</Button>
-                <Button variant="outline" onClick={() => handleCheckout('M-Pesa')} disabled={cart.length === 0}><Smartphone className="mr-2 h-4 w-4" /> M-Pesa</Button>
-                <Button variant="outline" onClick={() => handleCheckout('Card')} disabled={cart.length === 0}><CreditCard className="mr-2 h-4 w-4" /> Card</Button>
-                <Button variant="secondary" onClick={() => router.push('/dashboard/layaways/new')} disabled={cart.length === 0}>Layaway</Button>
-              </div>
-              <Button size="lg" className="w-full" onClick={() => handleCheckout('Card')} disabled={cart.length === 0}>Checkout</Button>
-            </CardContent>
-          </Card>
+                    <Button size="lg" onClick={handleCheckout}>Cashout</Button>
+                </CardFooter>
+            </Card>
         </div>
       </div>
-      <AlertDialog open={showReceipt} onOpenChange={setShowReceipt}>
-          <AlertDialogContent className="max-w-2xl">
+       <AlertDialog open={showReceipt} onOpenChange={setShowReceipt}>
+          <AlertDialogContent className="max-w-md">
               <AlertDialogHeader>
                   <AlertDialogTitle>Transaction Complete</AlertDialogTitle>
                   <AlertDialogDescription>
-                      Print the receipts for the customer and for your records.
+                      Print the receipt for the customer.
                   </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="max-h-[60vh] overflow-y-auto p-2" id="receipt-section">
                   {lastTransaction && (
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <h3 className="font-bold text-center mb-2">Customer Copy</h3>
-                          <Receipt {...lastTransaction} />
-                        </div>
-                        <div className="page-break-before">
-                          <h3 className="font-bold text-center mb-2">Store Copy</h3>
-                          <Receipt {...lastTransaction} />
-                        </div>
+                      <div>
+                        <h3 className="font-bold text-center mb-2">Customer Copy</h3>
+                        <Receipt {...lastTransaction} tax={0} />
                       </div>
                   )}
               </div>
               <AlertDialogFooter>
                   <AlertDialogCancel onClick={handleCloseReceipt}>Close</AlertDialogCancel>
-                  <Button onClick={handlePrint}>Print Receipts</Button>
+                  <Button onClick={handlePrint}>Print Receipt</Button>
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
-       <AdjustPriceDialog
-        item={itemToAdjust}
-        isOpen={isAdjustPriceOpen}
-        onOpenChange={setIsAdjustPriceOpen}
-        onPriceAdjust={handlePriceAdjust}
-      />
     </>
   );
 }
