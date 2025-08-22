@@ -415,13 +415,21 @@ export default function POSPage() {
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto pr-2">
                         {cart.length > 0 ? (
-                            <div className="space-y-2">
-                                {cart.map(item => (
-                                    <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                        <div className="flex-grow">
-                                            <p className="font-semibold">{item.name}</p>
-                                            <div className='flex items-center gap-2'>
-                                                <span className="text-sm">Ksh</span>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Product</TableHead>
+                                        <TableHead>Price</TableHead>
+                                        <TableHead>Qty</TableHead>
+                                        <TableHead>Total</TableHead>
+                                        <TableHead>Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {cart.map(item => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="font-semibold">{item.name}</TableCell>
+                                            <TableCell>
                                                 <Input
                                                     type="number"
                                                     value={item.agreedPrice}
@@ -431,26 +439,30 @@ export default function POSPage() {
                                                     className="h-7 w-24 text-sm"
                                                     min={item.minPrice}
                                                 />
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => updateQuantity(item.id, -1)}>
-                                                <Minus className="h-4 w-4"/>
-                                            </Button>
-                                            <span className="font-bold w-5 text-center">{item.quantity}</span>
-                                            <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => updateQuantity(item.id, 1)}>
-                                                <Plus className="h-4 w-4"/>
-                                            </Button>
-                                        </div>
-                                        <div className="font-mono w-24 text-right">
-                                            Ksh {(item.agreedPrice * item.quantity).toFixed(2)}
-                                        </div>
-                                        <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full text-destructive hover:text-destructive" onClick={() => deleteItem(item.id)}>
-                                            <Trash2 className="h-4 w-4"/>
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1">
+                                                    <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full" onClick={() => updateQuantity(item.id, -1)}>
+                                                        <Minus className="h-3 w-3"/>
+                                                    </Button>
+                                                    <span className="font-bold w-5 text-center">{item.quantity}</span>
+                                                    <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full" onClick={() => updateQuantity(item.id, 1)}>
+                                                        <Plus className="h-3 w-3"/>
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="font-mono text-right">
+                                                {(item.agreedPrice * item.quantity).toFixed(2)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full text-destructive hover:text-destructive" onClick={() => deleteItem(item.id)}>
+                                                    <Trash2 className="h-4 w-4"/>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         ) : (
                              <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
                                 <ShoppingCart className="h-12 w-12 mb-4" />
