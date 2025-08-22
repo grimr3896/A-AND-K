@@ -53,7 +53,7 @@ export const productDetailsForAI = JSON.stringify([
 ], null, 2);
 
 export const mockUsers: User[] = [
-    { id: 'USER001', username: 'admin', role: 'Admin' },
+    { id: 'USER001', username: 'A&Kbabyshop', role: 'Admin' },
     { id: 'USER002', username: 'manager', role: 'Manager' },
     { id: 'USER003', username: 'staff', role: 'Staff' },
 ];

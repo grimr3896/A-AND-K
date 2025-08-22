@@ -51,7 +51,7 @@ export default function InventoryPage() {
   const { toast } = useToast();
 
   const handlePasswordSubmit = () => {
-    if (passwordInput === 'KINGORCA') {
+    if (passwordInput === 'ALEXA') {
       setPasswordPrompt(false);
       setPasswordInput('');
       actionToConfirm?.();

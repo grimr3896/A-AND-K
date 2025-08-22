@@ -42,7 +42,7 @@ export default function BusinessInfoPage() {
         "Business Name": "A & K babyshop",
         "Address": "123 Blossom Lane, Garden City",
         "Tax Rate (%)": 8,
-        "Admin Login Password": "KINGORCA",
+        "Admin Login Password": "ALEXA",
     });
     const [editingField, setEditingField] = React.useState<string | null>(null);
     const [passwordPrompt, setPasswordPrompt] = React.useState(false);

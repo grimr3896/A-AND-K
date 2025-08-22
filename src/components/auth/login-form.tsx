@@ -30,7 +30,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = React.useState(false);
 
   // This would ideally be fetched from your backend/state management
-  const [adminPassword, setAdminPassword] = React.useState("KINGORCA");
+  const [adminPassword, setAdminPassword] = React.useState("ALEXA");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,14 +45,14 @@ export function LoginForm() {
 
     // Simulate API call
     setTimeout(() => {
-      const user = mockUsers.find(u => u.username === values.username);
+      const user = mockUsers.find(u => u.username.toLowerCase() === values.username.toLowerCase());
 
       if (user && values.password === adminPassword) {
         // In a real app, you'd use a more secure session management system.
         localStorage.setItem('loggedInUser', JSON.stringify(user));
         toast({
           title: 'Login Successful',
-          description: `Welcome back, ${values.username}!`,
+          description: `Welcome back, ${user.username}!`,
         });
         router.push('/dashboard');
       } else {
@@ -76,7 +76,7 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., admin, manager, staff" {...field} />
+                <Input placeholder="e.g., A&Kbabyshop, manager, staff" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
