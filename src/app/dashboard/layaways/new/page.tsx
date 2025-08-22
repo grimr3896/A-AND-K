@@ -27,7 +27,7 @@ import type { Product, Payment } from '@/lib/types';
 import { AddProductDialog } from './_components/add-product-dialog';
 import { AddPaymentDialog } from './_components/add-payment-dialog';
 import { mockProducts } from '@/lib/mock-data';
-import { PlusCircle, Edit, Banknote, CreditCard, Smartphone } from 'lucide-react';
+import { PlusCircle, Edit, Banknote, CreditCard, Smartphone, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 
@@ -52,6 +52,7 @@ export default function NewLayawayPage() {
   }, [payments]);
   
   const isCashoutDisabled = totalAmount === 0 || totalPaid < totalAmount;
+  const isSaveDisabled = !clientName || addedProducts.length === 0;
 
   const handleAddProduct = (product: Product) => {
     // In a real app, you'd also check for stock and place a hold.
@@ -66,20 +67,29 @@ export default function NewLayawayPage() {
     toast({ title: "Payment Added", description: `Logged a payment of Ksh ${payment.amount.toFixed(2)}.`})
   }
 
-  const handleCreateLayaway = () => {
-    if(!clientName || addedProducts.length === 0 || payments.length === 0) {
+  const handleSaveLayaway = (type: 'Draft' | 'Final') => {
+     if (isSaveDisabled) {
       toast({
         variant: 'destructive',
         title: 'Missing Information',
-        description: 'Please provide client name, add at least one product, and log an initial payment.',
+        description: 'Please provide client name and add at least one product.',
       });
       return;
     }
+    if (type === 'Final' && payments.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Payment',
+        description: 'Please log an initial payment before cashing out.',
+      });
+      return;
+    }
+
     // In a real app, you would save this data to your database
     // and then redirect.
     toast({
-      title: 'Layaway Created!',
-      description: 'The new layaway plan has been saved successfully.',
+      title: `Layaway ${type === 'Draft' ? 'Draft Saved' : 'Created'}!`,
+      description: `The layaway plan has been saved successfully.`,
     });
     router.push('/dashboard/layaways');
   };
@@ -178,11 +188,17 @@ export default function NewLayawayPage() {
                     <span>Remaining Balance:</span>
                     <span>Ksh {(totalAmount - totalPaid).toFixed(2)}</span>
                 </div>
-                <Button size="lg" disabled={isCashoutDisabled} onClick={handleCreateLayaway}>
+                <div className="grid grid-cols-2 gap-2">
+                    <Button size="lg" variant="outline" onClick={() => setIsAddPaymentOpen(true)}>
+                        Add Payment
+                    </Button>
+                     <Button size="lg" variant="outline" disabled={isSaveDisabled} onClick={() => handleSaveLayaway('Draft')}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Draft
+                    </Button>
+                </div>
+                <Button size="lg" disabled={isCashoutDisabled} onClick={() => handleSaveLayaway('Final')}>
                     Cashout & Create Layaway
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => setIsAddPaymentOpen(true)}>
-                    Add Payment
                 </Button>
             </CardFooter>
         </Card>
