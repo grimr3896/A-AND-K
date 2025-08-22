@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -7,12 +8,13 @@ import { Separator } from '@/components/ui/separator';
 type ReceiptProps = {
     cart: CartItem[];
     total: number;
+    taxRate: number;
     paymentMethod: string;
 };
 
-export function Receipt({ cart, total, paymentMethod }: ReceiptProps) {
+export function Receipt({ cart, total, taxRate, paymentMethod }: ReceiptProps) {
     const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const tax = subtotal * 0.08;
+    const tax = subtotal * (taxRate / 100);
 
     return (
         <div className="bg-white text-black p-4 rounded-lg shadow-md font-mono text-sm w-full max-w-sm mx-auto border">
@@ -37,7 +39,7 @@ export function Receipt({ cart, total, paymentMethod }: ReceiptProps) {
                     <span>Ksh {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span>Tax (8%)</span>
+                    <span>Tax ({taxRate}%)</span>
                     <span>Ksh {tax.toFixed(2)}</span>
                 </div>
             </div>
@@ -56,3 +58,5 @@ export function Receipt({ cart, total, paymentMethod }: ReceiptProps) {
         </div>
     );
 }
+
+    

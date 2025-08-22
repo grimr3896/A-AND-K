@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -20,7 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import { mockProducts as initialProducts } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
 import { AddProductDialog } from './_components/add-product-dialog';
@@ -43,6 +44,8 @@ export default function InventoryPage() {
   const [products, setProducts] = React.useState<Product[]>(initialProducts);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [productToEdit, setProductToEdit] = React.useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [passwordPrompt, setPasswordPrompt] = React.useState(false);
   const [passwordInput, setPasswordInput] = React.useState('');
   const [actionToConfirm, setActionToConfirm] = React.useState<(() => void) | null>(null);
@@ -90,6 +93,26 @@ export default function InventoryPage() {
         setIsDialogOpen(true);
     });
   };
+
+  const handleOpenDeleteDialog = (product: Product) => {
+    if (!hasRole(['Admin'])) {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete products.' });
+        return;
+    }
+    requestPassword(() => {
+        setProductToDelete(product);
+        setIsDeleteAlertOpen(true);
+    });
+  }
+
+  const confirmDelete = () => {
+    if(productToDelete) {
+        setProducts(prev => prev.filter(p => p.id !== productToDelete.id));
+        toast({title: "Success", description: `Product "${productToDelete.name}" has been deleted.`});
+        setIsDeleteAlertOpen(false);
+        setProductToDelete(null);
+    }
+  }
   
   const handleProductSubmit = (submittedProduct: Omit<Product, 'id'>) => {
     if (productToEdit) {
@@ -182,7 +205,10 @@ export default function InventoryPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenEditDialog(product)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenDeleteDialog(product)} className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -220,6 +246,23 @@ export default function InventoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product "{productToDelete?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setProductToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
+
+
+    

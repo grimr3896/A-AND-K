@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -14,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, PlusCircle } from 'lucide-react';
+import { Loader2, Edit, PlusCircle, Check, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,7 @@ export default function BusinessInfoPage() {
     const [passwordPrompt, setPasswordPrompt] = React.useState(false);
     const [passwordInput, setPasswordInput] = React.useState('');
     const [tempValue, setTempValue] = React.useState<string | number>('');
+    const [actionToConfirm, setActionToConfirm] = React.useState<(() => void) | null>(null);
 
     const form = useForm({
       resolver: zodResolver(newInfoSchema),
@@ -58,8 +60,14 @@ export default function BusinessInfoPage() {
     });
 
     const handleEditClick = (field: string) => {
-        setEditingField(field);
-        setTempValue(businessInfo[field]);
+        requestPassword(() => {
+            setEditingField(field);
+            setTempValue(businessInfo[field]);
+        });
+    };
+    
+    const requestPassword = (action: () => void) => {
+        setActionToConfirm(() => action);
         setPasswordPrompt(true);
     };
 
@@ -67,6 +75,8 @@ export default function BusinessInfoPage() {
         if (passwordInput === businessInfo['Admin Login Password']) {
             setPasswordPrompt(false);
             setPasswordInput('');
+            actionToConfirm?.();
+            setActionToConfirm(null);
         } else {
             toast({
                 variant: 'destructive',
@@ -89,7 +99,7 @@ export default function BusinessInfoPage() {
         if(editingField === "Admin Login Password" && tempValue !== oldPassword) {
           toast({
             title: "Security Notice",
-            description: `Password changed successfully. The new password is "${tempValue}". The reference on the login page has also been updated.`,
+            description: `Password changed successfully. The new password is "${tempValue}". Please use this for future logins and protected actions.`,
             duration: 9000,
           });
         } else {
@@ -120,25 +130,26 @@ export default function BusinessInfoPage() {
         </CardHeader>
         <CardContent className="space-y-4">
             {Object.entries(businessInfo).map(([key, value]) => (
-                 <div key={key} className="flex items-center justify-between p-3 rounded-md border">
+                 <div key={key} className="flex items-center justify-between p-3 rounded-md border min-h-[72px]">
                     <div>
                         <p className="text-sm font-medium text-muted-foreground">{key}</p>
-                        {editingField === key && !passwordPrompt ? (
+                        {editingField === key ? (
                              <Input
                                 type={typeof value === 'number' ? 'number' : (key === "Admin Login Password" ? 'password' : 'text')}
                                 value={tempValue}
                                 onChange={handleValueChange}
                                 className="mt-1"
                                 autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                              />
                         ) : (
                              <p className="text-lg font-semibold">{key === 'Admin Login Password' ? '••••••••' : value}</p>
                         )}
                     </div>
-                     {editingField === key && !passwordPrompt ? (
+                     {editingField === key ? (
                         <div className="flex gap-2">
-                             <Button onClick={handleSave} size="sm">Save</Button>
-                             <Button onClick={() => setEditingField(null)} size="sm" variant="outline">Cancel</Button>
+                             <Button onClick={handleSave} size="icon"><Check className="h-4 w-4" /></Button>
+                             <Button onClick={() => setEditingField(null)} size="icon" variant="ghost"><X className="h-4 w-4" /></Button>
                         </div>
                      ) : (
                         <Button variant="ghost" size="icon" onClick={() => handleEditClick(key)}>
@@ -181,7 +192,7 @@ export default function BusinessInfoPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Enter Password</AlertDialogTitle>
             <AlertDialogDescription>
-              Please enter the admin password to edit this information.
+              Please enter the admin password to make changes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
@@ -193,7 +204,7 @@ export default function BusinessInfoPage() {
             autoFocus
           />
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setPasswordInput(''); setEditingField(null); }}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => { setPasswordInput(''); setActionToConfirm(null); }}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handlePasswordSubmit}>Submit</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -201,3 +212,6 @@ export default function BusinessInfoPage() {
     </>
   );
 }
+
+
+    

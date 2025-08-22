@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -28,8 +29,11 @@ export default function POSPage() {
   const [showReceipt, setShowReceipt] = React.useState(false);
   const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], total: number, paymentMethod: string } | null>(null);
 
+  // In a real app, this would be fetched from business settings
+  const taxRate = 8; 
+
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const tax = subtotal * 0.08;
+  const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax;
 
   const addToCart = (product: Product) => {
@@ -174,7 +178,7 @@ export default function POSPage() {
                   <span>Ksh {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Tax (8%)</span>
+                  <span>Tax ({taxRate}%)</span>
                   <span>Ksh {tax.toFixed(2)}</span>
                 </div>
                 <Separator />
@@ -208,11 +212,11 @@ export default function POSPage() {
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h3 className="font-bold text-center mb-2">Customer Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} />
+                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} />
                         </div>
                         <div className="page-break-before">
                           <h3 className="font-bold text-center mb-2">Store Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} />
+                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} />
                         </div>
                       </div>
                   )}
@@ -226,3 +230,6 @@ export default function POSPage() {
     </>
   );
 }
+
+
+    
