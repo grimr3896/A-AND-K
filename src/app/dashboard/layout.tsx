@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -44,7 +45,7 @@ export default function DashboardLayout({
     { href: '/dashboard/inventory', label: 'Inventory', icon: Boxes, roles: ['Admin', 'Manager', 'Staff'] },
     { href: '/dashboard/stock-requirements', label: 'Stock Requirements', icon: Warehouse, roles: ['Admin', 'Manager'] },
     { href: '/dashboard/transactions', label: 'Transactions', icon: ClipboardList, roles: ['Admin', 'Manager'] },
-    { href: '/dashboard/layaways', label: 'Layaways', icon: Coins, roles: ['Admin', 'Manager'] },
+    { href: '/dashboard/layaways', label: 'Layaways', icon: Coins, roles: ['Admin', 'Manager', 'Staff'] },
     { href: '/dashboard/reports', label: 'Reports', icon: AreaChart, roles: ['Admin'] },
     { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp, roles: ['Admin'] },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu, roles: ['Admin'] },
@@ -72,7 +73,7 @@ export default function DashboardLayout({
               <span className="font-headline">A & K babyshop</span>
             </Link>
           </div>
-          <nav className="flex-1 overflow-auto px-2 text-sm font-medium lg:px-4">
+          <nav className="flex-1 overflow-auto px-2 text-sm lg:px-4">
             {accessibleLinks.map(({ href, label, icon: Icon }) => (
               <Link
                 key={label}
@@ -84,14 +85,6 @@ export default function DashboardLayout({
               </Link>
             ))}
           </nav>
-          <div className="mt-auto p-4">
-              <div className="border-t pt-4">
-                  <button onClick={logout} className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:text-primary font-semibold w-full">
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                  </button>
-              </div>
-          </div>
         </div>
       </div>
       <div className="flex flex-col">
@@ -122,13 +115,13 @@ export default function DashboardLayout({
                     {label}
                   </Link>
                 ))}
-                 <div className="mt-auto border-t pt-4">
-                    <button onClick={logout} className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold w-full">
-                        <LogOut className="h-5 w-5" />
-                        Logout
-                    </button>
-                </div>
               </nav>
+               <div className="mt-auto border-t pt-4">
+                  <button onClick={logout} className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold w-full">
+                      <LogOut className="h-5 w-5" />
+                      Logout
+                  </button>
+              </div>
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">

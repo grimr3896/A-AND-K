@@ -1,3 +1,4 @@
+
 export type Product = {
   id: string;
   name: string;
@@ -37,12 +38,18 @@ export type Customer = {
 export type Layaway = {
   id: string;
   customerName: string;
-  productName: string;
+  productName: string; // This can be a summary like "3 items"
   totalAmount: number;
   amountPaid: number;
   status: 'Pending' | 'Paid' | 'Cancelled';
   lastPaymentDate: string;
 };
+
+export type Payment = {
+    date: string;
+    amount: number;
+    method: 'Cash' | 'M-Pesa' | 'Card';
+}
 
 export type AuditLog = {
   id: string;
