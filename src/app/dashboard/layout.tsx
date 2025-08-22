@@ -67,19 +67,6 @@ export default function DashboardLayout({
               </Link>
             ))}
           </nav>
-          <div className="mt-auto p-4">
-            <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary font-semibold">
-                <Settings className="h-4 w-4" />
-                Settings
-            </div>
-            <Link
-                href="/"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary font-semibold"
-            >
-                <LogOut className="h-4 w-4" />
-                Logout
-            </Link>
-          </div>
         </div>
       </div>
       <div className="flex flex-col">
