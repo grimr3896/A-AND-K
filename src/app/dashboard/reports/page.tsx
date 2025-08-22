@@ -7,11 +7,21 @@ import {
 } from '@/components/ui/card';
 import { MonthlySalesChart } from './_components/monthly-sales-chart';
 import { CategorySalesChart } from './_components/category-sales-chart';
+import { BestSellingItems } from './_components/best-selling-items';
 
 
 export default function ReportsPage() {
   return (
     <div className="grid gap-4 md:gap-8">
+      <Card>
+          <CardHeader>
+            <CardTitle>Best Selling Items</CardTitle>
+            <CardDescription>Your top products by sales volume.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BestSellingItems />
+          </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Monthly Sales Report</CardTitle>
