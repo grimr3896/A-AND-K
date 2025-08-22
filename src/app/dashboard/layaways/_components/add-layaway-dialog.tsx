@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -25,6 +26,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Product, Layaway } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useProducts } from '@/contexts/products-context';
 
 const formSchema = z.object({
   customerName: z.string().min(1, 'Customer name is required'),
@@ -40,11 +42,11 @@ type AddLayawayDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onAddLayaway: (layaway: Omit<Layaway, 'id' | 'lastPaymentDate'>) => void;
-  products: Product[];
 };
 
-export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway, products }: AddLayawayDialogProps) {
+export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway }: AddLayawayDialogProps) {
   const { toast } = useToast();
+  const { products } = useProducts();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -115,7 +117,7 @@ export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway, products 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Product</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a product" />

@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
-import { mockProducts as initialProducts, getAdminPassword } from '@/lib/mock-data';
+import { getAdminPassword } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
 import { AddProductDialog } from './_components/add-product-dialog';
 import Image from 'next/image';
@@ -38,10 +38,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useProducts } from '@/contexts/products-context';
 
 
 export default function InventoryPage() {
-  const [products, setProducts] = React.useState<Product[]>(initialProducts);
+  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [productToEdit, setProductToEdit] = React.useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
@@ -107,28 +108,20 @@ export default function InventoryPage() {
 
   const confirmDelete = () => {
     if(productToDelete) {
-        setProducts(prev => prev.filter(p => p.id !== productToDelete.id));
+        deleteProduct(productToDelete.id);
         toast({title: "Success", description: `Product "${productToDelete.name}" has been deleted.`});
         setIsDeleteAlertOpen(false);
         setProductToDelete(null);
     }
   }
   
-  const handleProductSubmit = (submittedProduct: Omit<Product, 'id'>) => {
-    if (productToEdit) {
+  const handleProductSubmit = (submittedProduct: Omit<Product, 'id'> | Product) => {
+    if ('id' in submittedProduct) {
       // Edit existing product
-      setProducts(prevProducts =>
-        prevProducts.map(p =>
-          p.id === productToEdit.id ? { ...productToEdit, ...submittedProduct } : p
-        )
-      );
+      updateProduct(submittedProduct);
     } else {
       // Add new product
-      const productWithId = {
-        ...submittedProduct,
-        id: `PROD${(products.length + 1).toString().padStart(3, '0')}`,
-      };
-      setProducts(prevProducts => [...prevProducts, productWithId]);
+      addProduct(submittedProduct);
     }
     setIsDialogOpen(false);
     setProductToEdit(null);
@@ -221,7 +214,7 @@ export default function InventoryPage() {
       <AddProductDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onAddProduct={handleProductSubmit}
+        onProductSubmit={handleProductSubmit}
         productToEdit={productToEdit}
       />
       <AlertDialog open={passwordPrompt} onOpenChange={setPasswordPrompt}>

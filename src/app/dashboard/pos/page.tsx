@@ -21,12 +21,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
-import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
 import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Receipt } from './_components/receipt';
+import { useProducts } from '@/contexts/products-context';
 
 type CartItem = {
     id: string;
@@ -67,6 +67,7 @@ type PendingTransaction = {
 
 export default function POSPage() {
     const { toast } = useToast();
+    const { products: mockProducts } = useProducts();
     const [cart, setCart] = React.useState<CartItem[]>([]);
     const [agreementTable, setAgreementTable] = React.useState<AgreementItem[]>([]);
     const [amountReceived, setAmountReceived] = React.useState<number>(0);

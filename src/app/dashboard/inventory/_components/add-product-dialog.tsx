@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -27,7 +28,7 @@ import {
 } from '@/components/ui/form';
 import type { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { mockProducts } from '@/lib/mock-data';
+import { useProducts } from '@/contexts/products-context';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
@@ -49,12 +50,13 @@ const formSchema = z.object({
 type AddProductDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddProduct: (product: Omit<Product, 'id'>) => void;
+  onProductSubmit: (product: Omit<Product, 'id'> | Product) => void;
   productToEdit?: Product | null;
 };
 
-export function AddProductDialog({ isOpen, onOpenChange, onAddProduct, productToEdit }: AddProductDialogProps) {
+export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, productToEdit }: AddProductDialogProps) {
   const { toast } = useToast();
+  const { products } = useProducts();
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -79,10 +81,22 @@ export function AddProductDialog({ isOpen, onOpenChange, onAddProduct, productTo
       form.reset(productToEdit);
       setImagePreview(productToEdit.imageUrl || null);
     } else {
-      form.reset();
+      form.reset({
+        name: '',
+        sku: '',
+        category: '',
+        stock: 0,
+        price: 0,
+        lowStockThreshold: 5,
+        cost: 0,
+        minPrice: 0,
+        supplier: '',
+        description: '',
+        imageUrl: '',
+      });
       setImagePreview(null);
     }
-  }, [productToEdit, form]);
+  }, [productToEdit, form, isOpen]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -98,14 +112,13 @@ export function AddProductDialog({ isOpen, onOpenChange, onAddProduct, productTo
   };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddProduct(values);
+    const productData = productToEdit ? { ...productToEdit, ...values } : values;
+    onProductSubmit(productData);
     const action = productToEdit ? 'updated' : 'added';
     toast({ title: 'Success', description: `Product "${values.name}" has been ${action}.` });
-    form.reset();
-    setImagePreview(null);
   }
   
-  const categories = React.useMemo(() => [...new Set(mockProducts.map(p => p.category))], []);
+  const categories = React.useMemo(() => [...new Set(products.map(p => p.category))], [products]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -158,7 +171,7 @@ export function AddProductDialog({ isOpen, onOpenChange, onAddProduct, productTo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />

@@ -25,9 +25,11 @@ import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { AddLayawayDialog } from './_components/add-layaway-dialog';
 
 export default function LayawaysPage() {
   const [layaways, setLayaways] = React.useState<Layaway[]>(initialLayaways);
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -60,6 +62,17 @@ export default function LayawaysPage() {
   
   const handleAddNewLayaway = () => {
       router.push('/dashboard/layaways/new');
+  }
+
+  const handleAddLayaway = (layawayData: Omit<Layaway, 'id' | 'lastPaymentDate'>) => {
+    const newLayaway: Layaway = {
+        ...layawayData,
+        id: `LAY${(layaways.length + 1).toString().padStart(3, '0')}`,
+        lastPaymentDate: new Date().toISOString(),
+    };
+    setLayaways(prev => [...prev, newLayaway]);
+    toast({ title: "Success!", description: "New layaway plan has been created."});
+    setIsDialogOpen(false);
   }
 
   return (
@@ -133,6 +146,11 @@ export default function LayawaysPage() {
           </Table>
         </CardContent>
       </Card>
+      <AddLayawayDialog 
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onAddLayaway={handleAddLayaway}
+      />
     </>
   );
 }

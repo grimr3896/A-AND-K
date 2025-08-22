@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Product, Payment, Layaway } from '@/lib/types';
 import { AddProductDialog } from './_components/add-product-dialog';
 import { AddPaymentDialog } from './_components/add-payment-dialog';
-import { mockProducts } from '@/lib/mock-data';
+import { useProducts } from '@/contexts/products-context';
 import { PlusCircle, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,7 @@ import { Badge } from '@/components/ui/badge';
 export default function NewLayawayPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { products: mockProducts } = useProducts();
 
   const [clientName, setClientName] = React.useState('');
   const [clientPhone, setClientPhone] = React.useState('');
