@@ -46,13 +46,6 @@ export default function POSPage() {
 
   const balance = amountReceived - total;
   
-  React.useEffect(() => {
-    // Automatically update amount received to match total if total is higher or amount is 0
-    if (total > amountReceived || amountReceived === 0) {
-      setAmountReceived(total);
-    }
-  }, [total]);
-
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
