@@ -60,7 +60,7 @@ export default function DashboardLayout({
               <Link
                 key={label}
                 href={href}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary font-semibold"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:text-primary font-semibold"
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -104,7 +104,7 @@ export default function DashboardLayout({
                   <Link
                     key={label}
                     href={href}
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground font-semibold"
+                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold"
                   >
                     <Icon className="h-5 w-5" />
                     {label}
