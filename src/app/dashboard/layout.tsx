@@ -41,7 +41,6 @@ export default function DashboardLayout({
     { href: '/dashboard/reports', label: 'Reports', icon: AreaChart },
     { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu },
-    { href: '/dashboard/customers', label: 'Customers', icon: Users },
     { href: '/dashboard/audit-logs', label: 'Audit Logs', icon: FileClock },
   ];
 
@@ -67,6 +66,18 @@ export default function DashboardLayout({
               </Link>
             ))}
           </nav>
+          <div className="mt-auto p-4">
+              <div className="border-t pt-4">
+                  <Link href="/dashboard/business-info" className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:text-primary font-semibold">
+                      <Settings className="h-4 w-4" />
+                      Business Info
+                  </Link>
+                  <Link href="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:text-primary font-semibold">
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                  </Link>
+              </div>
+          </div>
         </div>
       </div>
       <div className="flex flex-col">
@@ -97,6 +108,16 @@ export default function DashboardLayout({
                     {label}
                   </Link>
                 ))}
+                 <div className="mt-auto border-t pt-4">
+                    <Link href="/dashboard/business-info" className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold">
+                        <Settings className="h-5 w-5" />
+                        Business Info
+                    </Link>
+                    <Link href="/" className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold">
+                        <LogOut className="h-5 w-5" />
+                        Logout
+                    </Link>
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -117,7 +138,9 @@ export default function DashboardLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/business-info">Settings</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
