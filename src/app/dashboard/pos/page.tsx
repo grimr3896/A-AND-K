@@ -26,11 +26,18 @@ import Image from 'next/image';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { MinusCircle, PlusCircle, Edit, Printer } from 'lucide-react';
+import { MinusCircle, PlusCircle, Edit, Printer, Trash2, RotateCcw, PauseCircle, CornerUpLeft } from 'lucide-react';
 import { AdjustPriceDialog } from './_components/adjust-price-dialog';
 import { Receipt } from './_components/receipt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+type PendingCart = {
+  id: string;
+  cart: CartItem[];
+  amountReceived: number;
+  paymentMethod: string;
+  timestamp: string;
+}
 
 export default function POSPage() {
   const { toast } = useToast();
@@ -40,6 +47,7 @@ export default function POSPage() {
   const [itemToAdjust, setItemToAdjust] = React.useState<CartItem | null>(null);
   const [isAdjustPriceOpen, setIsAdjustPriceOpen] = React.useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
+  const [pendingCarts, setPendingCarts] = React.useState<PendingCart[]>([]);
   
   const TAX_RATE = 0.08; // 8%
 
@@ -116,6 +124,43 @@ export default function POSPage() {
       toast({title: 'New Sale Started'});
   }
 
+  const handleSuspendSale = () => {
+    if (cart.length === 0) {
+        toast({ variant: 'destructive', title: 'Empty Cart', description: 'Cannot suspend an empty cart.' });
+        return;
+    }
+    const newPendingCart: PendingCart = {
+      id: `pending-${Date.now()}`,
+      cart,
+      amountReceived,
+      paymentMethod,
+      timestamp: new Date().toLocaleTimeString(),
+    };
+    setPendingCarts(prev => [newPendingCart, ...prev]);
+    handleNewSale();
+    toast({ title: 'Sale Suspended', description: 'The current sale has been moved to pending.' });
+  }
+
+  const handleResumeSale = (pendingId: string) => {
+    if(cart.length > 0) {
+        toast({ variant: 'destructive', title: 'Active Sale', description: 'Please suspend or complete the current sale before resuming another.' });
+        return;
+    }
+    const saleToResume = pendingCarts.find(p => p.id === pendingId);
+    if (saleToResume) {
+      setCart(saleToResume.cart);
+      setAmountReceived(saleToResume.amountReceived);
+      setPaymentMethod(saleToResume.paymentMethod);
+      setPendingCarts(prev => prev.filter(p => p.id !== pendingId));
+      toast({ title: 'Sale Resumed', description: `Resumed sale from ${saleToResume.timestamp}.` });
+    }
+  }
+
+  const handleDiscardSale = (pendingId: string) => {
+    setPendingCarts(prev => prev.filter(p => p.id !== pendingId));
+    toast({ title: 'Sale Discarded', description: 'The pending sale has been removed.' });
+  }
+
   return (
     <>
       <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
@@ -143,6 +188,42 @@ export default function POSPage() {
                   </Card>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <CardTitle>Pending Transactions</CardTitle>
+              <CardDescription>Sales that have been put on hold. Resume or discard them.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {pendingCarts.length > 0 ? (
+                    <ul className="space-y-3">
+                        {pendingCarts.map(p => (
+                            <li key={p.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/50">
+                                <div>
+                                    <div className="font-medium">
+                                        Suspended Sale ({p.cart.reduce((acc, item) => acc + item.quantity, 0)} items)
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                        Suspended at {p.timestamp} - Total: Ksh {(p.cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0) * (1 + TAX_RATE)).toFixed(2)}
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button size="sm" variant="outline" onClick={() => handleResumeSale(p.id)}>
+                                        <CornerUpLeft className="mr-2 h-4 w-4" /> Resume
+                                    </Button>
+                                    <Button size="sm" variant="destructive" onClick={() => handleDiscardSale(p.id)}>
+                                        <Trash2 className="mr-2 h-4 w-4" /> Discard
+                                    </Button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="text-center text-muted-foreground py-12">
+                        No pending transactions.
+                    </div>
+                )}
             </CardContent>
           </Card>
         </div>
@@ -259,8 +340,13 @@ export default function POSPage() {
                             )}
                          </div>
                      )}
-
-                     <Button size="lg" onClick={handleCheckout}>Cashout</Button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button size="lg" variant="outline" onClick={handleSuspendSale} disabled={cart.length === 0}>
+                            <PauseCircle className="mr-2 h-4 w-4" />
+                            Suspend
+                        </Button>
+                        <Button size="lg" onClick={handleCheckout}>Cashout</Button>
+                    </div>
                 </CardFooter>
             )}
           </Card>
@@ -298,3 +384,5 @@ export default function POSPage() {
     </>
   );
 }
+
+    
