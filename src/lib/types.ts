@@ -1,6 +1,5 @@
 
 
-
 export type Product = {
   id: string;
   name: string;
@@ -20,6 +19,7 @@ export type CartItem = Product & {
   quantity: number;
   currentPrice: number; // The price for this transaction, which can be adjusted
   originalPrice: number; // The standard price before any adjustments
+  adjustmentReason?: string; // Reason for price change
 };
 
 export type Sale = {
