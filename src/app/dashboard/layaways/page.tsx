@@ -30,6 +30,33 @@ export default function LayawaysPage() {
   const [layaways, setLayaways] = React.useState<Layaway[]>(initialLayaways);
   const router = useRouter();
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    try {
+      const newLayawaysData = sessionStorage.getItem('newLayaways');
+      if (newLayawaysData) {
+        const newLayaways = JSON.parse(newLayawaysData) as Omit<Layaway, 'id'>[];
+        
+        // Add new layaways to the state, assigning unique IDs
+        setLayaways(prevLayaways => {
+          const updatedLayaways = [...prevLayaways];
+          newLayaways.forEach((newLayaway, index) => {
+            const layawayWithId: Layaway = {
+              ...newLayaway,
+              id: `LAY_NEW_${Date.now()}_${index}`, 
+            };
+            updatedLayaways.push(layawayWithId);
+          });
+          return updatedLayaways;
+        });
+
+        // Clear the session storage to avoid adding them again on refresh
+        sessionStorage.removeItem('newLayaways');
+      }
+    } catch (error) {
+      console.error("Could not process new layaways from session storage", error);
+    }
+  }, []);
   
   const handleAddNewLayaway = () => {
       router.push('/dashboard/layaways/new');

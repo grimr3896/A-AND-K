@@ -23,11 +23,11 @@ import {
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import type { Product, Payment } from '@/lib/types';
+import type { Product, Payment, Layaway } from '@/lib/types';
 import { AddProductDialog } from './_components/add-product-dialog';
 import { AddPaymentDialog } from './_components/add-payment-dialog';
 import { mockProducts } from '@/lib/mock-data';
-import { PlusCircle, Edit, Banknote, CreditCard, Smartphone, Save } from 'lucide-react';
+import { PlusCircle, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 
@@ -85,8 +85,24 @@ export default function NewLayawayPage() {
       return;
     }
 
-    // In a real app, you would save this data to your database
-    // and then redirect.
+    const newLayaway: Omit<Layaway, 'id'> = {
+      customerName: clientName,
+      productName: addedProducts.length > 1 ? `${addedProducts.length} items` : addedProducts[0].name,
+      totalAmount: totalAmount,
+      amountPaid: totalPaid,
+      status: totalPaid >= totalAmount ? 'Paid' : 'Pending',
+      lastPaymentDate: new Date().toISOString(),
+    };
+
+    // In a real app, you would save this data to your database.
+    // For this mock, we use sessionStorage to pass it back to the list.
+    try {
+      const existingLayaways = JSON.parse(sessionStorage.getItem('newLayaways') || '[]');
+      sessionStorage.setItem('newLayaways', JSON.stringify([...existingLayaways, newLayaway]));
+    } catch (error) {
+      console.error("Could not save layaway to session storage", error);
+    }
+    
     toast({
       title: `Layaway ${type === 'Draft' ? 'Draft Saved' : 'Created'}!`,
       description: `The layaway plan has been saved successfully.`,
@@ -125,9 +141,9 @@ export default function NewLayawayPage() {
                 <div className="border rounded-md min-h-[100px] p-2">
                     {addedProducts.length > 0 ? (
                         <ul className="space-y-1">
-                            {addedProducts.map(p => (
+                            {addedProducts.map((p, index) => (
                                 <li key={p.id} className="flex justify-between items-center text-sm">
-                                    <span>1. {p.name}</span>
+                                    <span>{index + 1}. {p.name}</span>
                                     <span>Ksh {p.price.toFixed(2)}</span>
                                 </li>
                             ))}
