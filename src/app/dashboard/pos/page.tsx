@@ -35,11 +35,19 @@ export default function POSPage() {
   const total = subtotal + tax;
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   
-  const isCheckoutDisabled = cart.length === 0 || cart.some(item => item.currentPrice < item.minPrice);
+  const priceAgreementError = cart.some(item => item.currentPrice < item.minPrice);
+  const isCheckoutDisabled = cart.length === 0 || priceAgreementError;
 
   React.useEffect(() => {
     setAmountReceived(total.toFixed(2));
-  }, [total]);
+    if (priceAgreementError) {
+      toast({
+        variant: 'destructive',
+        title: 'Price Agreement Error',
+        description: 'One or more items have an agreed price below the minimum allowed price.',
+      });
+    }
+  }, [total, cart, priceAgreementError, toast]);
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
