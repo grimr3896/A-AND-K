@@ -8,32 +8,27 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardFooter,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { MinusCircle, PlusCircle, XCircle } from 'lucide-react';
+import { MinusCircle, PlusCircle, ShoppingCart, CreditCard, Landmark, Wallet, CalendarClock } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function POSPage() {
   const { toast } = useToast();
   const { hasRole } = useAuth();
   const [cart, setCart] = React.useState<CartItem[]>([]);
-  
+  const [amountReceived, setAmountReceived] = React.useState(0);
+  const [paymentMethod, setPaymentMethod] = React.useState<string | null>(null);
+
   const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
+  const taxAmount = subtotal * 0.08; // 8% tax rate
+  const total = subtotal + taxAmount;
+  const changeDue = amountReceived - total;
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -58,16 +53,16 @@ export default function POSPage() {
       prevCart.map(item => {
         if (item.id === productId) {
           if (!isNaN(newPrice)) {
-            if (newPrice < item.minPrice) {
+            if (newPrice < item.minPrice && !hasRole(['Admin', 'Manager'])) {
                toast({
                 variant: 'destructive',
                 title: 'Price Alert',
-                description: `Agreed price for ${item.name} is below the minimum price of Ksh ${item.minPrice.toFixed(2)}.`,
+                description: `Price for ${item.name} requires manager approval.`,
               });
             }
             return { ...item, currentPrice: newPrice };
           }
-          return { ...item, currentPrice: 0 }; // Or handle as an error
+          return { ...item, currentPrice: 0 };
         }
         return item;
       })
@@ -94,21 +89,27 @@ export default function POSPage() {
       )
     );
   };
-
-  const removeItem = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
-  };
   
-  const isCashoutDisabled = cart.some(item => item.currentPrice < item.minPrice) || cart.length === 0;
+  const isCheckoutDisabled = cart.length === 0 || amountReceived < total || !paymentMethod;
+
+  const handleCheckout = () => {
+     // In a real app, this would trigger receipt printing, saving the sale, etc.
+     toast({
+        title: 'Checkout Successful!',
+        description: `Sale complete. Change due: Ksh ${changeDue > 0 ? changeDue.toFixed(2) : '0.00'}`
+     });
+     // Reset state for next sale
+     setCart([]);
+     setAmountReceived(0);
+     setPaymentMethod(null);
+  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
-      {/* Left Side */}
-      <div className="grid grid-rows-2 gap-4">
-        {/* Product Selection */}
-        <Card className="flex flex-col">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-full">
+      {/* Left Side: Product Selection */}
+      <Card className="lg:col-span-3 flex flex-col">
           <CardHeader>
-            <CardTitle>Product</CardTitle>
+            <CardTitle>Product Selection</CardTitle>
           </CardHeader>
           <CardContent className="flex-grow overflow-y-auto">
              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -129,106 +130,119 @@ export default function POSPage() {
                 ))}
               </div>
           </CardContent>
-        </Card>
-        {/* Price Agreement */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Price agreement</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow overflow-y-auto">
-            {cart.length > 0 ? (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Product</TableHead>
-                            <TableHead>SP</TableHead>
-                            <TableHead>MM</TableHead>
-                            <TableHead>Agreed price</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
+      </Card>
+      
+      {/* Right Side: Cart */}
+      <div className="lg:col-span-2 flex flex-col gap-4">
+        <Card className="flex-grow flex flex-col">
+            <CardHeader className="bg-primary text-primary-foreground text-center">
+                 <CardTitle className="flex items-center justify-center gap-2">
+                    <ShoppingCart /> Shopping Cart
+                 </CardTitle>
+            </CardHeader>
+            <div className="text-center py-2 text-muted-foreground font-medium border-b">
+                 {cart.length} items
+            </div>
+             <CardContent className="p-4 flex-grow overflow-y-auto">
+                {cart.length > 0 ? (
+                    <div className="space-y-4">
                         {cart.map(item => (
-                            <TableRow key={item.id}>
-                                <TableCell className="font-medium">{item.name}</TableCell>
-                                <TableCell className="font-mono">Ksh {item.price.toFixed(2)}</TableCell>
-                                <TableCell className="font-mono">Ksh {item.minPrice.toFixed(2)}</TableCell>
-                                <TableCell>
-                                    <Input
-                                        type="number"
-                                        value={item.currentPrice}
-                                        onChange={(e) => handleAgreedPriceChange(item.id, e.target.value)}
-                                        className={`w-28 text-right font-mono h-8 ${item.currentPrice < item.minPrice ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                             <div key={item.id} className="flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <Image
+                                        src={item.imageUrl || `https://placehold.co/70x70.png`}
+                                        alt={item.name}
+                                        width={70}
+                                        height={70}
+                                        className="rounded-md border"
                                     />
-                                </TableCell>
-                            </TableRow>
+                                    <div>
+                                        <h3 className="font-semibold">{item.name}</h3>
+                                        <p className="text-primary font-medium">Ksh {item.currentPrice.toFixed(2)}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                     <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                                        <MinusCircle className="h-5 w-5" />
+                                    </Button>
+                                    <span className="font-bold text-lg w-5 text-center">{item.quantity}</span>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                                        <PlusCircle className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                             </div>
                         ))}
-                    </TableBody>
-                </Table>
-            ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Add products to begin price agreement.
-                </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                        Your cart is empty.
+                    </div>
+                )}
+            </CardContent>
+             <div className="px-4 pb-4 mt-auto space-y-4">
+                 <div className="space-y-2 border-t pt-4">
+                    <div className="flex justify-between text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span>Ksh {subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                        <span>Tax (8%)</span>
+                        <span>Ksh {taxAmount.toFixed(2)}</span>
+                    </div>
+                     <Separator />
+                    <div className="flex justify-between font-bold text-xl">
+                        <span>Total</span>
+                        <span>Ksh {total.toFixed(2)}</span>
+                    </div>
+                 </div>
 
-      {/* Right Side */}
-      <div className="grid grid-rows-2 gap-4">
-        {/* Running Cart */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Cart</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow overflow-y-auto">
-            {cart.length > 0 ? (
                 <div className="space-y-2">
-                    {cart.map(item => (
-                        <div key={item.id} className="flex justify-between items-center text-sm border-b pb-2">
-                            <span>{item.name} {item.quantity}@{item.currentPrice.toFixed(2)}</span>
-                            <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-                                    <MinusCircle className="h-4 w-4" />
-                                </Button>
-                                <span className="font-medium w-4 text-center">{item.quantity}</span>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                                    <PlusCircle className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full text-destructive" onClick={() => removeItem(item.id)}>
-                                    <XCircle className="h-4 w-4" />
-                                </Button>
-                            </div>
+                    <label className="font-semibold">Amount Received</label>
+                    <Input 
+                        type="number"
+                        placeholder="Enter amount received"
+                        value={amountReceived || ''}
+                        onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)}
+                        className="text-lg h-12 text-right font-mono"
+                    />
+                     {amountReceived > 0 && changeDue >= 0 && (
+                        <div className="text-right text-primary font-bold">
+                            Change: Ksh {changeDue.toFixed(2)}
                         </div>
-                    ))}
+                     )}
                 </div>
-            ) : (
-                 <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Cart is empty.
+
+                <div>
+                    <h3 className="font-semibold mb-2">Select Payment Method</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                        {(['Cash', 'M-Pesa', 'Card', 'Layaway'] as const).map((method) => (
+                             <Button 
+                                key={method} 
+                                variant={paymentMethod === method ? "default" : "outline"}
+                                className="h-14 text-base"
+                                onClick={() => setPaymentMethod(method)}
+                            >
+                                {method === 'Cash' && <Wallet className="mr-2"/>}
+                                {method === 'M-Pesa' && <Landmark className="mr-2"/>}
+                                {method === 'Card' && <CreditCard className="mr-2"/>}
+                                {method === 'Layaway' && <CalendarClock className="mr-2"/>}
+                                {method}
+                             </Button>
+                        ))}
+                    </div>
                 </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex-col items-stretch space-y-2 border-t pt-4">
-            <div className="flex justify-between font-semibold">
-                <span>Subtotal</span>
-                <span>Ksh {subtotal.toFixed(2)}</span>
-            </div>
-            <Button size="lg" disabled={isCashoutDisabled}>Cashout</Button>
-          </CardFooter>
-        </Card>
-        {/* Pending Transactions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center h-full border-2 border-dashed rounded-md text-muted-foreground">
-              Suspended transactions will appear here.
-            </div>
-          </CardContent>
+
+                <Button 
+                    size="lg" 
+                    className="w-full h-16 text-xl font-bold" 
+                    disabled={isCheckoutDisabled}
+                    onClick={handleCheckout}
+                >
+                    Checkout
+                </Button>
+             </div>
         </Card>
       </div>
     </div>
   );
 }
-
-    
