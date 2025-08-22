@@ -35,7 +35,7 @@ export default function Dashboard() {
   const monthlyProgress = (totalRevenue / monthlyTarget) * 100;
   
   const transactionsToday = mockSales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length;
-  const averageTransactionValue = totalRevenue / mockSales.length;
+  const averageTransactionValue = totalRevenue > 0 && mockSales.length > 0 ? totalRevenue / mockSales.length : 0;
 
 
   return (
