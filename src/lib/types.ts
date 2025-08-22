@@ -19,7 +19,7 @@ export type CartItem = Product & {
   quantity: number;
   currentPrice: number; // The price for this transaction, which can be adjusted
   originalPrice: number; // The standard price before any adjustments
-  adjustmentReason?: string; // Reason for price change
+  managerOverride?: boolean;
 };
 
 export type Sale = {

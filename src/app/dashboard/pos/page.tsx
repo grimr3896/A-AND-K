@@ -21,38 +21,43 @@ import {
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { MinusCircle, PlusCircle, Printer, Trash2, Edit, RotateCcw } from 'lucide-react';
+import { MinusCircle, PlusCircle, Printer, Trash2, Edit, RotateCcw, AlertCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { AdjustPriceDialog } from './_components/adjust-price-dialog';
 import { Receipt } from './_components/receipt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
 
 export default function POSPage() {
   const { toast } = useToast();
   const { hasRole } = useAuth();
   const [cart, setCart] = React.useState<CartItem[]>([]);
-  const [paymentMethod, setPaymentMethod] = React.useState('Cash');
-  const [amountReceived, setAmountReceived] = React.useState(0);
-  const [isPriceDialogOpen, setIsPriceDialogOpen] = React.useState(false);
-  const [itemToAdjust, setItemToAdjust] = React.useState<CartItem | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
+  const [pendingCarts, setPendingCarts] = React.useState<any[]>([]);
+  const [isManagerAlertOpen, setIsManagerAlertOpen] = React.useState(false);
+  const [managerPassword, setManagerPassword] = React.useState('');
+  const [priceToOverride, setPriceToOverride] = React.useState<{itemId: string, price: number} | null>(null);
 
-
-  const TAX_RATE = 0.08; // 8%
+  const TAX_RATE = 0.08;
 
   const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
-  const changeDue = amountReceived - total;
-  const balanceRemaining = total - amountReceived;
   
-  const isCashoutDisabled = cart.length === 0 || amountReceived < total;
-
+  const isCheckoutDisabled = cart.some(item => item.currentPrice < item.minPrice && !item.managerOverride) || cart.length === 0;
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -67,7 +72,7 @@ export default function POSPage() {
           return prevCart;
         }
       }
-      return [...prevCart, { ...product, quantity: 1, currentPrice: product.price, originalPrice: product.price, adjustmentReason: '' }];
+      return [...prevCart, { ...product, quantity: 1, currentPrice: product.price, originalPrice: product.price, managerOverride: false }];
     });
   };
 
@@ -92,23 +97,39 @@ export default function POSPage() {
       );
     });
   };
-
-  const handleOpenPriceDialog = (item: CartItem) => {
-    setItemToAdjust(item);
-    setIsPriceDialogOpen(true);
-  };
-
-  const handlePriceAdjust = (itemId: string, newPrice: number, reason: string) => {
-    setCart(cart.map(item => item.id === itemId ? {...item, currentPrice: newPrice, adjustmentReason: reason} : item));
+  
+  const handlePriceChange = (itemId: string, newPrice: number) => {
+     setCart(cart.map(item => {
+        if (item.id === itemId) {
+            const isValid = newPrice >= item.minPrice;
+            if (!isValid && !hasRole(['Admin', 'Manager'])) {
+                setPriceToOverride({itemId, price: newPrice});
+                setIsManagerAlertOpen(true);
+                return item; // Don't update price until override
+            }
+            return {...item, currentPrice: newPrice, managerOverride: !isValid };
+        }
+        return item;
+    }));
+  }
+  
+  const handleManagerOverride = () => {
+    if (managerPassword === 'ALEXA') { // In a real app, verify this securely
+      if (priceToOverride) {
+        setCart(cart.map(item => item.id === priceToOverride.itemId ? {...item, currentPrice: priceToOverride.price, managerOverride: true } : item));
+        toast({ title: 'Manager Override Approved', description: 'Price has been updated below minimum.' });
+      }
+      setIsManagerAlertOpen(false);
+      setManagerPassword('');
+      setPriceToOverride(null);
+    } else {
+      toast({ variant: 'destructive', title: 'Authentication Failed', description: 'Incorrect manager password.' });
+    }
   };
 
   const handleCheckout = () => {
-    if (cart.length === 0) {
-      toast({ variant: 'destructive', title: 'Empty Cart', description: 'Add products to the cart before checkout.' });
-      return;
-    }
-    if (amountReceived < total) {
-      toast({ variant: 'destructive', title: 'Insufficient Payment', description: `Amount received is less than the total of Ksh ${total.toFixed(2)}.` });
+    if (isCheckoutDisabled) {
+      toast({ variant: 'destructive', title: 'Checkout Blocked', description: 'Please resolve pricing errors before checkout.' });
       return;
     }
     // In a real app, this is where you'd save the sale to the database.
@@ -117,23 +138,48 @@ export default function POSPage() {
   
   const handleNewSale = () => {
     setCart([]);
-    setAmountReceived(0);
-    setPaymentMethod('Cash');
     setIsReceiptOpen(false);
     toast({ title: 'New Sale Started' });
   }
+  
+  const handleSuspend = () => {
+    if (cart.length === 0) return;
+    const pendingId = `PEND_${Date.now()}`;
+    const cartSummary = cart.length > 1 ? `${cart.length} items` : cart[0].name;
+    setPendingCarts([...pendingCarts, { id: pendingId, cart, summary: cartSummary, total }]);
+    setCart([]);
+    toast({ title: 'Sale Suspended', description: `Cart with ${cartSummary} was moved to pending.` });
+  }
+
+  const handleResume = (pendingId: string) => {
+     if(cart.length > 0) {
+        toast({ variant: 'destructive', title: 'Active Cart', description: 'Please suspend or complete the current sale before resuming another.' });
+        return;
+    }
+    const pendingSale = pendingCarts.find(p => p.id === pendingId);
+    if(pendingSale) {
+        setCart(pendingSale.cart);
+        setPendingCarts(pendingCarts.filter(p => p.id !== pendingId));
+    }
+  }
+
+  const handleDiscard = (pendingId: string) => {
+    setPendingCarts(pendingCarts.filter(p => p.id !== pendingId));
+    toast({ title: 'Sale Discarded', description: 'The pending sale has been removed.' });
+  }
+
 
   return (
     <>
       <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
         {/* Left Column */}
-        <div className="grid auto-rows-max items-start gap-4 xl:col-span-2">
+        <div className="grid auto-rows-max items-start gap-4 xl:col-span-1">
           <Card>
             <CardHeader>
               <CardTitle>Products</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <CardContent className="max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {mockProducts.map((product) => (
                   <Card key={product.id} className="cursor-pointer hover:border-primary transition-colors flex flex-col" onClick={() => addToCart(product)}>
                     <CardContent className="p-2 flex flex-col items-center gap-2 flex-grow">
@@ -152,65 +198,92 @@ export default function POSPage() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Pending</CardTitle>
+                  <CardDescription>Suspended transactions.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                  {pendingCarts.length > 0 ? pendingCarts.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-2 border rounded-md">
+                          <div>
+                            <p className="font-medium">{p.summary}</p>
+                            <p className="text-sm text-muted-foreground">Ksh {p.total.toFixed(2)}</p>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" onClick={() => handleResume(p.id)}>Resume</Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDiscard(p.id)}><XCircle className="h-4 w-4"/></Button>
+                          </div>
+                      </div>
+                  )) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">No pending sales.</p>
+                  )}
+              </CardContent>
+          </Card>
         </div>
 
         {/* Right Column */}
-        <div className="grid auto-rows-max items-start gap-4">
+        <div className="grid auto-rows-max items-start gap-4 xl:col-span-2">
           <Card className="sticky top-6">
             <CardHeader>
-              <CardTitle>Cart</CardTitle>
-              <CardDescription>
-                Manage quantities and prices for the current sale.
-              </CardDescription>
+              <CardTitle>Price Agreement</CardTitle>
             </CardHeader>
             <CardContent>
               {cart.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
+                      <TableHead className="w-[200px]">Product</TableHead>
                       <TableHead>Qty</TableHead>
-                      <TableHead className="text-right">Price</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>SP</TableHead>
+                      <TableHead>MM</TableHead>
+                      <TableHead className="w-[150px]">Agreed Price</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cart.map(item => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-                               <MinusCircle className="h-4 w-4" />
-                            </Button>
-                            <Input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
-                              className="w-12 h-8 text-center"
+                    {cart.map(item => {
+                      const isPriceInvalid = item.currentPrice < item.minPrice;
+                      return (
+                        <TableRow key={item.id} className={isPriceInvalid && !item.managerOverride ? 'bg-destructive/10' : ''}>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                                 <MinusCircle className="h-4 w-4" />
+                              </Button>
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
+                                className="w-12 h-8 text-center"
+                              />
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                                  <PlusCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-muted-foreground">{item.price.toFixed(2)}</TableCell>
+                          <TableCell className="font-mono text-muted-foreground">{item.minPrice.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Input 
+                                type="number"
+                                value={item.currentPrice}
+                                onChange={(e) => handlePriceChange(item.id, parseFloat(e.target.value) || 0)}
+                                className={`w-28 font-mono ${isPriceInvalid && !item.managerOverride ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                             />
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                                <PlusCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                           {item.currentPrice.toFixed(2)}
-                           {item.currentPrice !== item.price && (
-                             <p className="text-xs text-muted-foreground line-through">{item.price.toFixed(2)}</p>
-                           )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                           <Button variant="outline" size="sm" onClick={() => handleOpenPriceDialog(item)}>
-                                <Edit className="h-3 w-3 mr-1" />
-                                Adjust
-                            </Button>
-                            <Button variant="ghost" size="icon" className="ml-1 text-destructive" onClick={() => removeFromCart(item.id)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            {item.managerOverride && <p className="text-xs text-yellow-600">Override</p>}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">{(item.currentPrice * item.quantity).toFixed(2)}</TableCell>
+                          <TableCell className="text-right">
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeFromCart(item.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                              </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               ) : (
@@ -220,6 +293,7 @@ export default function POSPage() {
               )}
             </CardContent>
              <CardFooter className="flex flex-col items-stretch space-y-4 bg-muted/50 p-4">
+                 <CardTitle>Cart</CardTitle>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
@@ -236,67 +310,14 @@ export default function POSPage() {
                     <span className="font-mono">Ksh {total.toFixed(2)}</span>
                 </div>
                 <Separator />
-                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label htmlFor="amount-received" className="text-xs font-medium">Amount Received</label>
-                    <Input
-                      id="amount-received"
-                      type="number"
-                      value={amountReceived || ''}
-                      onChange={e => setAmountReceived(parseFloat(e.target.value) || 0)}
-                      className="text-right font-mono"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label htmlFor="payment-method" className="text-xs font-medium">Payment Method</label>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                      <SelectTrigger id="payment-method">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="M-Pesa">M-Pesa</SelectItem>
-                        <SelectItem value="Card">Card</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                 {amountReceived > 0 && (
-                   <div className={`flex justify-between font-bold text-base p-2 rounded-md ${changeDue >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                    {changeDue >= 0 ? (
-                      <>
-                        <span>Change Due:</span>
-                        <span>Ksh {changeDue.toFixed(2)}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Balance Remaining:</span>
-                        <span>Ksh {balanceRemaining.toFixed(2)}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-                 <div className="grid grid-cols-1 gap-2">
-                  <Button size="lg" onClick={handleCheckout} disabled={isCashoutDisabled}>Cashout</Button>
-                  <Button size="lg" variant="destructive" onClick={() => setCart([])}>
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Clear Cart
-                  </Button>
+                 <div className="grid grid-cols-2 gap-2">
+                  <Button size="lg" onClick={handleCheckout} disabled={isCheckoutDisabled}>Cashout</Button>
+                  <Button size="lg" variant="outline" onClick={handleSuspend} disabled={cart.length === 0}>Suspend</Button>
                 </div>
             </CardFooter>
           </Card>
         </div>
       </div>
-
-      {itemToAdjust && (
-        <AdjustPriceDialog
-          isOpen={isPriceDialogOpen}
-          onOpenChange={setIsPriceDialogOpen}
-          item={itemToAdjust}
-          onPriceAdjust={handlePriceAdjust}
-        />
-      )}
       
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="max-w-sm">
@@ -308,9 +329,9 @@ export default function POSPage() {
             subtotal={subtotal}
             tax={tax}
             total={total}
-            paymentMethod={paymentMethod}
-            amountReceived={amountReceived}
-            changeDue={changeDue}
+            paymentMethod={"Cash"}
+            amountReceived={total}
+            changeDue={0}
           />
           <div className="flex justify-end gap-2 mt-4">
              <Button variant="outline" onClick={() => { window.print(); handleNewSale(); }}>
@@ -319,8 +340,28 @@ export default function POSPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+       <AlertDialog open={isManagerAlertOpen} onOpenChange={setIsManagerAlertOpen}>
+            <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Manager Override Required</AlertDialogTitle>
+                <AlertDialogDescription>
+                The price is below the minimum allowed. Please enter manager password to approve.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input
+                type="password"
+                placeholder="Manager Password"
+                value={managerPassword}
+                onChange={(e) => setManagerPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleManagerOverride()}
+            />
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => { setManagerPassword(''); setPriceToOverride(null); }}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleManagerOverride}>Approve</AlertDialogAction>
+            </AlertDialogFooter>
+            </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
-
-    
