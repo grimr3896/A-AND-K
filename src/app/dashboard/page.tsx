@@ -38,7 +38,7 @@ export default function Dashboard() {
             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">Ksh {totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               +20.1% from last month
             </p>
@@ -125,7 +125,7 @@ export default function Dashboard() {
                         {sale.paymentMethod}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">${sale.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">Ksh {sale.total.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

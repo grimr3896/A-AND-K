@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   ShoppingCart,
+  TrendingUp,
   Users,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,6 +39,7 @@ export default function DashboardLayout({
     { href: '/dashboard/transactions', label: 'Transactions', icon: ClipboardList },
     { href: '/dashboard/layaways', label: 'Layaways', icon: Coins },
     { href: '/dashboard/reports', label: 'Reports', icon: AreaChart },
+    { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu },
     { href: '/dashboard/customers', label: 'Customers', icon: Users },
     { href: '/dashboard/audit-logs', label: 'Audit Logs', icon: FileClock },

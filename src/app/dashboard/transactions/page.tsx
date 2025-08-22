@@ -48,7 +48,7 @@ export default function TransactionsPage() {
                     {sale.paymentMethod}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">${sale.total.toFixed(2)}</TableCell>
+                <TableCell className="text-right">Ksh {sale.total.toFixed(2)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

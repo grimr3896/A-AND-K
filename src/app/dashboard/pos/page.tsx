@@ -75,7 +75,23 @@ export default function POSPage() {
   };
   
   const handlePrint = () => {
-    window.print();
+    const printContent = document.getElementById('receipt-section');
+    const windowUrl = 'about:blank';
+    const uniqueName = new Date().getTime();
+    const windowName = 'Print' + uniqueName;
+    const printWindow = window.open(windowUrl, windowName, 'left=50000,top=50000,width=0,height=0');
+
+    if (printWindow && printContent) {
+        printWindow.document.write('<html><head><title>Print Receipt</title>');
+        printWindow.document.write('<style>@media print { body { -webkit-print-color-adjust: exact; } .page-break-before { page-break-before: always; } }</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(printContent.innerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }
   }
 
   const handleCloseReceipt = () => {
@@ -106,7 +122,7 @@ export default function POSPage() {
                         data-ai-hint="product image"
                       />
                       <div className="text-sm font-medium text-center">{product.name}</div>
-                      <div className="text-xs text-muted-foreground">${product.price.toFixed(2)}</div>
+                      <div className="text-xs text-muted-foreground">Ksh {product.price.toFixed(2)}</div>
                     </CardContent>
                   </Card>
                 ))}
@@ -128,7 +144,7 @@ export default function POSPage() {
                       <div>
                         <div className="font-medium">{item.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          ${item.price.toFixed(2)}
+                          Ksh {item.price.toFixed(2)}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -141,7 +157,7 @@ export default function POSPage() {
                         </Button>
                       </div>
                       <div className="text-right font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        Ksh {(item.price * item.quantity).toFixed(2)}
                       </div>
                     </div>
                   ))
@@ -155,16 +171,16 @@ export default function POSPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>Ksh {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (8%)</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>Ksh {tax.toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>Ksh {total.toFixed(2)}</span>
                 </div>
               </div>
               <Separator />
@@ -194,7 +210,7 @@ export default function POSPage() {
                           <h3 className="font-bold text-center mb-2">Customer Copy</h3>
                           <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} />
                         </div>
-                        <div>
+                        <div className="page-break-before">
                           <h3 className="font-bold text-center mb-2">Store Copy</h3>
                           <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} />
                         </div>
@@ -207,41 +223,6 @@ export default function POSPage() {
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
-
-      <div className="hidden">
-        {lastTransaction && (
-          <div id="printable-receipt" className="space-y-4">
-             <div className="p-4 border">
-                <h3 className="font-bold text-center mb-2">Customer Copy</h3>
-                <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} />
-              </div>
-              <div className="p-4 border page-break-before">
-                 <h3 className="font-bold text-center mb-2">Store Copy</h3>
-                <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} />
-              </div>
-          </div>
-        )}
-      </div>
-
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #receipt-section, #receipt-section * {
-            visibility: visible;
-          }
-          #receipt-section {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .page-break-before {
-            page-break-before: always;
-          }
-        }
-      `}</style>
     </>
   );
 }

@@ -54,7 +54,7 @@ export default function LayawaysPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  ${layaway.amountPaid.toFixed(2)} / ${layaway.totalAmount.toFixed(2)}
+                  Ksh {layaway.amountPaid.toFixed(2)} / Ksh {layaway.totalAmount.toFixed(2)}
                 </TableCell>
               </TableRow>
             ))}

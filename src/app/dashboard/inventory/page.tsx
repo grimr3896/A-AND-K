@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,55 +19,76 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle } from 'lucide-react';
-import { mockProducts } from '@/lib/mock-data';
+import { mockProducts as initialProducts } from '@/lib/mock-data';
+import type { Product } from '@/lib/types';
+import { AddProductDialog } from './_components/add-product-dialog';
 
 export default function InventoryPage() {
+  const [products, setProducts] = React.useState<Product[]>(initialProducts);
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+  const handleAddProduct = (newProduct: Omit<Product, 'id'>) => {
+    const productWithId = {
+      ...newProduct,
+      id: `PROD${(products.length + 1).toString().padStart(3, '0')}`,
+    };
+    setProducts(prevProducts => [...prevProducts, productWithId]);
+    setIsDialogOpen(false);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Inventory</CardTitle>
-            <CardDescription>Manage your products and stock levels.</CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Inventory</CardTitle>
+              <CardDescription>Manage your products and stock levels.</CardDescription>
+            </div>
+            <Button size="sm" className="gap-1" onClick={() => setIsDialogOpen(true)}>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Add Product
+              </span>
+            </Button>
           </div>
-          <Button size="sm" className="gap-1">
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Product
-            </span>
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product Name</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockProducts.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.sku}</TableCell>
-                <TableCell>{product.category}</TableCell>
-                <TableCell>
-                  {product.stock < product.lowStockThreshold ? (
-                    <Badge variant="destructive">Low Stock ({product.stock})</Badge>
-                  ) : (
-                    product.stock
-                  )}
-                </TableCell>
-                <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product Name</TableHead>
+                <TableHead>SKU</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead className="text-right">Price</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{product.sku}</TableCell>
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell>
+                    {product.stock < product.lowStockThreshold ? (
+                      <Badge variant="destructive">Low Stock ({product.stock})</Badge>
+                    ) : (
+                      product.stock
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">Ksh {product.price.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <AddProductDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onAddProduct={handleAddProduct}
+      />
+    </>
   );
 }

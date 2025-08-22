@@ -6,6 +6,8 @@ export type Product = {
   stock: number;
   price: number;
   lowStockThreshold: number;
+  cost: number;
+  minPrice: number;
 };
 
 export type CartItem = Product & {
