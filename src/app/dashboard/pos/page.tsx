@@ -109,15 +109,15 @@ export default function POSPage() {
 
   return (
     <>
-      <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-5">
         {/* Left Column */}
-        <div className="grid auto-rows-max items-start gap-4 xl:col-span-1">
+        <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 xl:col-span-3">
           <Card>
             <CardHeader>
               <CardTitle>Products</CardTitle>
             </CardHeader>
             <CardContent className="max-h-[80vh] overflow-y-auto">
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {mockProducts.map((product) => (
                   <Card key={product.id} className="cursor-pointer hover:border-primary transition-colors flex flex-col" onClick={() => addToCart(product)}>
                     <CardContent className="p-2 flex flex-col items-center gap-2 flex-grow">
@@ -139,7 +139,7 @@ export default function POSPage() {
         </div>
 
         {/* Right Column */}
-        <div className="grid auto-rows-max items-start gap-4 xl:col-span-2">
+        <div className="grid auto-rows-max items-start gap-4 lg:col-span-1 xl:col-span-2">
           <Card className="sticky top-6">
             <CardHeader>
               <CardTitle>Cart</CardTitle>
