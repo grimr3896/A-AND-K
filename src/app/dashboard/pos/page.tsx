@@ -74,6 +74,7 @@ export default function POSPage() {
     const [completedSale, setCompletedSale] = React.useState<CompletedSale | null>(null);
     const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
     const [pendingTransactions, setPendingTransactions] = React.useState<PendingTransaction[]>([]);
+    const [searchTerm, setSearchTerm] = React.useState('');
     const receiptRef = React.useRef<HTMLDivElement>(null);
 
 
@@ -224,11 +225,10 @@ export default function POSPage() {
         if (printContent) {
             const printWindow = window.open('', '', 'height=600,width=800');
             printWindow?.document.write('<html><head><title>Print Receipt</title>');
+            // A minimal set of styles to make the receipt look decent when printed
             printWindow?.document.write(`
                 <style>
                     body { font-family: monospace; font-size: 10pt; }
-                    .flex { display: flex; }
-                    .justify-between { justify-content: space-between; }
                     .text-center { text-align: center; }
                     .font-bold { font-weight: bold; }
                     .mb-4 { margin-bottom: 1rem; }
@@ -237,7 +237,10 @@ export default function POSPage() {
                     .text-green-600 { color: #16a34a; }
                     .text-xs { font-size: 0.75rem; }
                     .pl-4 { padding-left: 1rem; }
-                    hr { border: none; border-top: 1px dashed black; }
+                    hr { border: none; border-top: 1px dashed black; margin: 0.5rem 0; }
+                    .flex { display: flex; }
+                    .justify-between { justify-content: space-between; }
+                    .text-base { font-size: 1rem; }
                 </style>
             `);
             printWindow?.document.write('</head><body>');
@@ -318,6 +321,10 @@ export default function POSPage() {
             toast({ title: 'Order Resumed', description: 'The suspended order has been loaded into the cart.' });
         }
     }
+    
+    const filteredProducts = mockProducts.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
 
     return (
@@ -329,9 +336,16 @@ export default function POSPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Product</CardTitle>
+                        <div className="pt-2">
+                           <Input 
+                                placeholder="Search products..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                           />
+                        </div>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {mockProducts.map((product) => (
+                        {filteredProducts.map((product) => (
                             <button key={product.id} onClick={() => addProductToCart(product)} className="flex flex-col items-center justify-center p-3 border rounded-lg hover:bg-muted transition-colors text-center">
                                  <div className="text-primary mb-2">
                                     {productIcons[product.category] || productIcons['Default']}
