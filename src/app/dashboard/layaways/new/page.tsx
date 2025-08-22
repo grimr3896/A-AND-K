@@ -29,6 +29,7 @@ import { AddPaymentDialog } from './_components/add-payment-dialog';
 import { mockProducts } from '@/lib/mock-data';
 import { PlusCircle, Edit, Banknote, CreditCard, Smartphone } from 'lucide-react';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 export default function NewLayawayPage() {
   const router = useRouter();
