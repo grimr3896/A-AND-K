@@ -46,18 +46,14 @@ export default function POSPage() {
   const { hasRole } = useAuth();
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
-  const [pendingCarts, setPendingCarts] = React.useState<any[]>([]);
-  const [isManagerAlertOpen, setIsManagerAlertOpen] = React.useState(false);
-  const [managerPassword, setManagerPassword] = React.useState('');
-  const [priceToOverride, setPriceToOverride] = React.useState<{itemId: string, price: number} | null>(null);
-
+  
   const TAX_RATE = 0.08;
 
   const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
   
-  const isCheckoutDisabled = cart.some(item => item.currentPrice < item.minPrice && !item.managerOverride) || cart.length === 0;
+  const isCheckoutDisabled = cart.length === 0;
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -98,41 +94,10 @@ export default function POSPage() {
     });
   };
   
-  const handlePriceChange = (itemId: string, newPrice: number) => {
-     setCart(cart.map(item => {
-        if (item.id === itemId) {
-            const isValid = newPrice >= item.minPrice;
-            if (!isValid && !hasRole(['Admin', 'Manager'])) {
-                setPriceToOverride({itemId, price: newPrice});
-                setIsManagerAlertOpen(true);
-                return item; // Don't update price until override
-            }
-            return {...item, currentPrice: newPrice, managerOverride: !isValid };
-        }
-        return item;
-    }));
-  }
-  
-  const handleManagerOverride = () => {
-    if (managerPassword === 'ALEXA') { // In a real app, verify this securely
-      if (priceToOverride) {
-        setCart(cart.map(item => item.id === priceToOverride.itemId ? {...item, currentPrice: priceToOverride.price, managerOverride: true } : item));
-        toast({ title: 'Manager Override Approved', description: 'Price has been updated below minimum.' });
-      }
-      setIsManagerAlertOpen(false);
-      setManagerPassword('');
-      setPriceToOverride(null);
-    } else {
-      toast({ variant: 'destructive', title: 'Authentication Failed', description: 'Incorrect manager password.' });
-    }
-  };
-
   const handleCheckout = () => {
     if (isCheckoutDisabled) {
-      toast({ variant: 'destructive', title: 'Checkout Blocked', description: 'Please resolve pricing errors before checkout.' });
       return;
     }
-    // In a real app, this is where you'd save the sale to the database.
     setIsReceiptOpen(true);
   };
   
@@ -141,33 +106,6 @@ export default function POSPage() {
     setIsReceiptOpen(false);
     toast({ title: 'New Sale Started' });
   }
-  
-  const handleSuspend = () => {
-    if (cart.length === 0) return;
-    const pendingId = `PEND_${Date.now()}`;
-    const cartSummary = cart.length > 1 ? `${cart.length} items` : cart[0].name;
-    setPendingCarts([...pendingCarts, { id: pendingId, cart, summary: cartSummary, total }]);
-    setCart([]);
-    toast({ title: 'Sale Suspended', description: `Cart with ${cartSummary} was moved to pending.` });
-  }
-
-  const handleResume = (pendingId: string) => {
-     if(cart.length > 0) {
-        toast({ variant: 'destructive', title: 'Active Cart', description: 'Please suspend or complete the current sale before resuming another.' });
-        return;
-    }
-    const pendingSale = pendingCarts.find(p => p.id === pendingId);
-    if(pendingSale) {
-        setCart(pendingSale.cart);
-        setPendingCarts(pendingCarts.filter(p => p.id !== pendingId));
-    }
-  }
-
-  const handleDiscard = (pendingId: string) => {
-    setPendingCarts(pendingCarts.filter(p => p.id !== pendingId));
-    toast({ title: 'Sale Discarded', description: 'The pending sale has been removed.' });
-  }
-
 
   return (
     <>
@@ -178,7 +116,7 @@ export default function POSPage() {
             <CardHeader>
               <CardTitle>Products</CardTitle>
             </CardHeader>
-            <CardContent className="max-h-[60vh] overflow-y-auto">
+            <CardContent className="max-h-[80vh] overflow-y-auto">
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {mockProducts.map((product) => (
                   <Card key={product.id} className="cursor-pointer hover:border-primary transition-colors flex flex-col" onClick={() => addToCart(product)}>
@@ -198,35 +136,13 @@ export default function POSPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-              <CardHeader>
-                  <CardTitle>Pending</CardTitle>
-                  <CardDescription>Suspended transactions.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                  {pendingCarts.length > 0 ? pendingCarts.map(p => (
-                      <div key={p.id} className="flex justify-between items-center p-2 border rounded-md">
-                          <div>
-                            <p className="font-medium">{p.summary}</p>
-                            <p className="text-sm text-muted-foreground">Ksh {p.total.toFixed(2)}</p>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button size="sm" onClick={() => handleResume(p.id)}>Resume</Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleDiscard(p.id)}><XCircle className="h-4 w-4"/></Button>
-                          </div>
-                      </div>
-                  )) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">No pending sales.</p>
-                  )}
-              </CardContent>
-          </Card>
         </div>
 
         {/* Right Column */}
         <div className="grid auto-rows-max items-start gap-4 xl:col-span-2">
           <Card className="sticky top-6">
             <CardHeader>
-              <CardTitle>Price Agreement</CardTitle>
+              <CardTitle>Cart</CardTitle>
             </CardHeader>
             <CardContent>
               {cart.length > 0 ? (
@@ -235,18 +151,14 @@ export default function POSPage() {
                     <TableRow>
                       <TableHead className="w-[200px]">Product</TableHead>
                       <TableHead>Qty</TableHead>
-                      <TableHead>SP</TableHead>
-                      <TableHead>MM</TableHead>
-                      <TableHead className="w-[150px]">Agreed Price</TableHead>
+                      <TableHead>Price</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cart.map(item => {
-                      const isPriceInvalid = item.currentPrice < item.minPrice;
-                      return (
-                        <TableRow key={item.id} className={isPriceInvalid && !item.managerOverride ? 'bg-destructive/10' : ''}>
+                    {cart.map(item => (
+                        <TableRow key={item.id}>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
@@ -264,17 +176,7 @@ export default function POSPage() {
                               </Button>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-muted-foreground">{item.price.toFixed(2)}</TableCell>
-                          <TableCell className="font-mono text-muted-foreground">{item.minPrice.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Input 
-                                type="number"
-                                value={item.currentPrice}
-                                onChange={(e) => handlePriceChange(item.id, parseFloat(e.target.value) || 0)}
-                                className={`w-28 font-mono ${isPriceInvalid && !item.managerOverride ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                            />
-                            {item.managerOverride && <p className="text-xs text-yellow-600">Override</p>}
-                          </TableCell>
+                          <TableCell className="font-mono">{item.currentPrice.toFixed(2)}</TableCell>
                           <TableCell className="text-right font-mono">{(item.currentPrice * item.quantity).toFixed(2)}</TableCell>
                           <TableCell className="text-right">
                               <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeFromCart(item.id)}>
@@ -282,8 +184,8 @@ export default function POSPage() {
                               </Button>
                           </TableCell>
                         </TableRow>
-                      );
-                    })}
+                      )
+                    )}
                   </TableBody>
                 </Table>
               ) : (
@@ -293,7 +195,6 @@ export default function POSPage() {
               )}
             </CardContent>
              <CardFooter className="flex flex-col items-stretch space-y-4 bg-muted/50 p-4">
-                 <CardTitle>Cart</CardTitle>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
@@ -310,9 +211,8 @@ export default function POSPage() {
                     <span className="font-mono">Ksh {total.toFixed(2)}</span>
                 </div>
                 <Separator />
-                 <div className="grid grid-cols-2 gap-2">
+                 <div className="grid grid-cols-1 gap-2">
                   <Button size="lg" onClick={handleCheckout} disabled={isCheckoutDisabled}>Cashout</Button>
-                  <Button size="lg" variant="outline" onClick={handleSuspend} disabled={cart.length === 0}>Suspend</Button>
                 </div>
             </CardFooter>
           </Card>
@@ -340,30 +240,6 @@ export default function POSPage() {
           </div>
         </DialogContent>
       </Dialog>
-      
-       <AlertDialog open={isManagerAlertOpen} onOpenChange={setIsManagerAlertOpen}>
-            <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Manager Override Required</AlertDialogTitle>
-                <AlertDialogDescription>
-                The price is below the minimum allowed. Please enter manager password to approve.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <Input
-                type="password"
-                placeholder="Manager Password"
-                value={managerPassword}
-                onChange={(e) => setManagerPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleManagerOverride()}
-            />
-            <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => { setManagerPassword(''); setPriceToOverride(null); }}>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleManagerOverride}>Approve</AlertDialogAction>
-            </AlertDialogFooter>
-            </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
-
-    
