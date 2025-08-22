@@ -33,16 +33,21 @@ export default function POSPage() {
   const { toast } = useToast();
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [showReceipt, setShowReceipt] = React.useState(false);
-  const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], total: number, paymentMethod: string, amountReceived: number, changeDue: number } | null>(null);
+  const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], subtotal: number, tax: number, total: number, paymentMethod: string, amountReceived: number, changeDue: number } | null>(null);
   const [amountReceived, setAmountReceived] = React.useState(0);
   const [isAdjustPriceOpen, setIsAdjustPriceOpen] = React.useState(false);
   const [itemToAdjust, setItemToAdjust] = React.useState<CartItem | null>(null);
 
-  const total = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
-  const changeDue = amountReceived > total ? amountReceived - total : 0;
+  const TAX_RATE = 0.08; // 8%
+
+  const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
+  const tax = subtotal * TAX_RATE;
+  const total = subtotal + tax;
+
+  const balance = amountReceived - total;
   
   React.useEffect(() => {
-    // Automatically update amount received to match total if total is higher
+    // Automatically update amount received to match total if total is higher or amount is 0
     if (total > amountReceived || amountReceived === 0) {
       setAmountReceived(total);
     }
@@ -102,7 +107,7 @@ export default function POSPage() {
       toast({ variant: 'destructive', title: 'Insufficient Payment', description: 'Amount received is less than the total.' });
       return;
     }
-    setLastTransaction({ cart, total, paymentMethod, amountReceived, changeDue });
+    setLastTransaction({ cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue: balance });
     setShowReceipt(true);
     setCart([]);
     setAmountReceived(0);
@@ -209,6 +214,15 @@ export default function POSPage() {
               </div>
               <Separator />
               <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>Ksh {subtotal.toFixed(2)}</span>
+                </div>
+                 <div className="flex justify-between">
+                  <span>Tax ({(TAX_RATE * 100).toFixed(0)}%)</span>
+                  <span>Ksh {tax.toFixed(2)}</span>
+                </div>
+                <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>Ksh {total.toFixed(2)}</span>
@@ -224,12 +238,10 @@ export default function POSPage() {
                     disabled={cart.length === 0}
                    />
                 </div>
-                 {changeDue > 0 && (
-                  <div className="flex justify-between font-bold text-lg text-primary">
-                    <span>Change Due</span>
-                    <span>Ksh {changeDue.toFixed(2)}</span>
+                 <div className={`flex justify-between font-bold text-lg ${balance >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                    <span>{balance >= 0 ? 'Change Due' : 'Balance Remaining'}</span>
+                    <span>Ksh {Math.abs(balance).toFixed(2)}</span>
                   </div>
-                )}
               </div>
               <Separator />
               <div className="grid grid-cols-2 gap-2">
@@ -256,11 +268,11 @@ export default function POSPage() {
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h3 className="font-bold text-center mb-2">Customer Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
+                          <Receipt {...lastTransaction} />
                         </div>
                         <div className="page-break-before">
                           <h3 className="font-bold text-center mb-2">Store Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
+                          <Receipt {...lastTransaction} />
                         </div>
                       </div>
                   )}

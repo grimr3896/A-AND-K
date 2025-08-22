@@ -8,13 +8,15 @@ import { Separator } from '@/components/ui/separator';
 
 type ReceiptProps = {
     cart: CartItem[];
+    subtotal: number;
+    tax: number;
     total: number;
     paymentMethod: string;
     amountReceived: number;
     changeDue: number;
 };
 
-export function Receipt({ cart, total, paymentMethod, amountReceived, changeDue }: ReceiptProps) {
+export function Receipt({ cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue }: ReceiptProps) {
     return (
         <div className="bg-white text-black p-4 rounded-lg shadow-md font-mono text-sm w-full max-w-sm mx-auto border">
             <div className="text-center mb-4">
@@ -38,6 +40,17 @@ export function Receipt({ cart, total, paymentMethod, amountReceived, changeDue 
                         )}
                     </React.Fragment>
                 ))}
+            </div>
+            <Separator className="my-2 bg-black" />
+            <div className="space-y-1">
+                <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>Ksh {subtotal.toFixed(2)}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Tax (8%)</span>
+                    <span>Ksh {tax.toFixed(2)}</span>
+                </div>
             </div>
             <Separator className="my-2 bg-black" />
             <div className="flex justify-between font-bold text-base">
