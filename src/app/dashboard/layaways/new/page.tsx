@@ -142,7 +142,7 @@ export default function NewLayawayPage() {
                     {addedProducts.length > 0 ? (
                         <ul className="space-y-1">
                             {addedProducts.map((p, index) => (
-                                <li key={p.id} className="flex justify-between items-center text-sm">
+                                <li key={`${p.id}-${index}`} className="flex justify-between items-center text-sm">
                                     <span>{index + 1}. {p.name}</span>
                                     <span>Ksh {p.price.toFixed(2)}</span>
                                 </li>
