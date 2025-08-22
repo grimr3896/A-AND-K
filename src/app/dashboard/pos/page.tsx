@@ -25,7 +25,7 @@ import Image from 'next/image';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { MinusCircle, PlusCircle, Printer, Trash2, Edit, RotateCcw, AlertCircle, XCircle } from 'lucide-react';
+import { MinusCircle, PlusCircle, Printer, Trash2, XCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Receipt } from './_components/receipt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -365,3 +365,5 @@ export default function POSPage() {
     </>
   );
 }
+
+    
