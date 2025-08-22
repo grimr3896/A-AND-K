@@ -44,6 +44,7 @@ export default function BusinessInfoPage() {
         "Address": "123 Blossom Lane, Garden City",
         "Tax Rate (%)": 8,
         "Admin Login Password": "ALEXA",
+        "API Key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     });
     const [editingField, setEditingField] = React.useState<string | null>(null);
     const [passwordPrompt, setPasswordPrompt] = React.useState(false);
@@ -118,6 +119,10 @@ export default function BusinessInfoPage() {
       form.reset();
     }
 
+    const isSensitiveField = (key: string) => {
+        return key === "Admin Login Password" || key === "API Key";
+    }
+
 
   return (
     <>
@@ -135,7 +140,7 @@ export default function BusinessInfoPage() {
                         <p className="text-sm font-medium text-muted-foreground">{key}</p>
                         {editingField === key ? (
                              <Input
-                                type={typeof value === 'number' ? 'number' : (key === "Admin Login Password" ? 'password' : 'text')}
+                                type={typeof value === 'number' ? 'number' : (isSensitiveField(key) ? 'password' : 'text')}
                                 value={tempValue}
                                 onChange={handleValueChange}
                                 className="mt-1"
@@ -143,7 +148,7 @@ export default function BusinessInfoPage() {
                                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                              />
                         ) : (
-                             <p className="text-lg font-semibold">{key === 'Admin Login Password' ? '••••••••' : value}</p>
+                             <p className="text-lg font-semibold">{isSensitiveField(key) ? '••••••••' : value}</p>
                         )}
                     </div>
                      {editingField === key ? (
@@ -212,6 +217,3 @@ export default function BusinessInfoPage() {
     </>
   );
 }
-
-
-    
