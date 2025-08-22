@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -16,11 +17,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { mockSales } from '@/lib/mock-data';
 
-export default function TransactionsPage() {
+export default function SalesHistoryPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Transaction History</CardTitle>
+        <CardTitle>Sales History</CardTitle>
         <CardDescription>A complete record of all sales.</CardDescription>
       </CardHeader>
       <CardContent>
