@@ -28,6 +28,9 @@ export function LoginForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
 
+  // This would ideally be fetched from your backend/state management
+  const [adminPassword, setAdminPassword] = React.useState("CALEXA");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,7 +44,11 @@ export function LoginForm() {
 
     // Simulate API call
     setTimeout(() => {
-      if (values.password === 'CALEXA') {
+      // In a real app, you would fetch the latest password to compare against.
+      // For this prototype, we'll use the hardcoded one, but recognize that
+      // if it's changed on the business info page, this won't reflect it
+      // without a page reload or more complex state management.
+      if (values.password === adminPassword) {
         toast({
           title: 'Login Successful',
           description: `Welcome back, ${values.username}!`,
