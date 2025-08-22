@@ -11,41 +11,24 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { MinusCircle, PlusCircle, Printer, Trash2, XCircle } from 'lucide-react';
+import { MinusCircle, PlusCircle, Printer, Trash2, XCircle, CreditCard, Smartphone, Banknote } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Receipt } from './_components/receipt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-
 
 export default function POSPage() {
   const { toast } = useToast();
   const { hasRole } = useAuth();
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
+  const [amountReceived, setAmountReceived] = React.useState('');
+  const [paymentMethod, setPaymentMethod] = React.useState('Cash');
   
   const TAX_RATE = 0.08;
 
@@ -54,6 +37,10 @@ export default function POSPage() {
   const total = subtotal + tax;
   
   const isCheckoutDisabled = cart.length === 0;
+
+  React.useEffect(() => {
+    setAmountReceived(total.toFixed(2));
+  }, [total]);
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -71,14 +58,10 @@ export default function POSPage() {
       return [...prevCart, { ...product, quantity: 1, currentPrice: product.price, originalPrice: product.price, managerOverride: false }];
     });
   };
-
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
-  };
   
   const updateQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
       return;
     }
 
@@ -98,20 +81,28 @@ export default function POSPage() {
     if (isCheckoutDisabled) {
       return;
     }
+    const received = parseFloat(amountReceived);
+    if(isNaN(received) || received < total) {
+      toast({ variant: 'destructive', title: 'Insufficient Amount', description: 'Amount received is less than the total.' });
+      return;
+    }
     setIsReceiptOpen(true);
   };
   
   const handleNewSale = () => {
     setCart([]);
+    setAmountReceived('');
     setIsReceiptOpen(false);
     toast({ title: 'New Sale Started' });
   }
 
+  const changeDue = parseFloat(amountReceived) - total;
+
   return (
     <>
-      <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-5">
         {/* Left Column */}
-        <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 xl:col-span-3">
+        <div className="grid auto-rows-max items-start gap-4 lg:col-span-3">
           <Card>
             <CardHeader>
               <CardTitle>Products</CardTitle>
@@ -139,57 +130,40 @@ export default function POSPage() {
         </div>
 
         {/* Right Column */}
-        <div className="grid auto-rows-max items-start gap-4 lg:col-span-1 xl:col-span-2">
+        <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
           <Card className="sticky top-6">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Cart</CardTitle>
+              <div className="text-sm text-muted-foreground font-medium">
+                  {cart.reduce((acc, item) => acc + item.quantity, 0)} items
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {cart.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[200px]">Product</TableHead>
-                      <TableHead>Qty</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {cart.map(item => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-                                 <MinusCircle className="h-4 w-4" />
-                              </Button>
-                              <Input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
-                                className="w-12 h-8 text-center"
-                              />
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                                  <PlusCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-mono">{item.currentPrice.toFixed(2)}</TableCell>
-                          <TableCell className="text-right font-mono">{(item.currentPrice * item.quantity).toFixed(2)}</TableCell>
-                          <TableCell className="text-right">
-                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeFromCart(item.id)}>
-                                  <Trash2 className="h-4 w-4" />
-                              </Button>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    )}
-                  </TableBody>
-                </Table>
+                <div className="divide-y">
+                   {cart.map(item => (
+                    <div key={item.id} className="p-4 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">Ksh {item.currentPrice.toFixed(2)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                         <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                           <MinusCircle className="h-4 w-4" />
+                         </Button>
+                         <span className="font-medium w-4 text-center">{item.quantity}</span>
+                         <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                           <PlusCircle className="h-4 w-4" />
+                         </Button>
+                      </div>
+                       <div className="w-24 text-right font-medium">
+                         Ksh {(item.currentPrice * item.quantity).toFixed(2)}
+                       </div>
+                    </div>
+                   ))}
+                </div>
               ) : (
-                <div className="text-center text-muted-foreground py-12">
+                <div className="text-center text-muted-foreground p-12">
                   Cart is empty
                 </div>
               )}
@@ -210,10 +184,40 @@ export default function POSPage() {
                     <span>Total</span>
                     <span className="font-mono">Ksh {total.toFixed(2)}</span>
                 </div>
-                <Separator />
-                 <div className="grid grid-cols-1 gap-2">
-                  <Button size="lg" onClick={handleCheckout} disabled={isCheckoutDisabled}>Cashout</Button>
+                 <Separator />
+                <div>
+                  <label htmlFor="amount-received" className="text-sm font-medium">Amount Received</label>
+                  <Input 
+                    id="amount-received" 
+                    placeholder="Enter amount" 
+                    className="mt-1 text-base h-11"
+                    value={amountReceived}
+                    onChange={(e) => setAmountReceived(e.target.value)}
+                  />
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant={paymentMethod === 'Cash' ? 'default' : 'outline'} 
+                      onClick={() => setPaymentMethod('Cash')}>
+                      <Banknote className="mr-2"/> Cash
+                    </Button>
+                    <Button 
+                      variant={paymentMethod === 'M-Pesa' ? 'default' : 'outline'} 
+                      onClick={() => setPaymentMethod('M-Pesa')}>
+                      <Smartphone className="mr-2"/> M-Pesa
+                    </Button>
+                    <Button 
+                      variant={paymentMethod === 'Card' ? 'default' : 'outline'} 
+                      onClick={() => setPaymentMethod('Card')}>
+                      <CreditCard className="mr-2"/> Card
+                    </Button>
+                    <Button 
+                      variant={paymentMethod === 'Layaway' ? 'default' : 'outline'} 
+                      onClick={() => setPaymentMethod('Layaway')}>
+                      Layaway
+                    </Button>
+                </div>
+                <Button size="lg" onClick={handleCheckout} disabled={isCheckoutDisabled}>Checkout</Button>
             </CardFooter>
           </Card>
         </div>
@@ -229,12 +233,12 @@ export default function POSPage() {
             subtotal={subtotal}
             tax={tax}
             total={total}
-            paymentMethod={"Cash"}
-            amountReceived={total}
-            changeDue={0}
+            paymentMethod={paymentMethod}
+            amountReceived={parseFloat(amountReceived) || 0}
+            changeDue={changeDue > 0 ? changeDue : 0}
           />
           <div className="flex justify-end gap-2 mt-4">
-             <Button variant="outline" onClick={() => { window.print(); handleNewSale(); }}>
+             <Button variant="outline" onClick={() => { handleNewSale(); }}>
               <Printer className="mr-2 h-4 w-4" /> Print & New Sale
             </Button>
           </div>
