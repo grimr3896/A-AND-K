@@ -48,7 +48,6 @@ export default function DashboardLayout({
     { href: '/dashboard/reports', label: 'Reports', icon: AreaChart, roles: ['Admin'] },
     { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp, roles: ['Admin'] },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu, roles: ['Admin'] },
-    { href: '/dashboard/audit-logs', label: 'Audit Logs', icon: FileClock, roles: ['Admin'] },
     { href: '/dashboard/business-info', label: 'Business Info', icon: Settings, roles: ['Admin'] },
   ];
 
