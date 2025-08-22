@@ -224,7 +224,7 @@ export default function POSPage() {
                              <Input 
                                 id="amount-received"
                                 type="number" 
-                                value={amountReceived} 
+                                value={amountReceived || ''}
                                 onChange={e => setAmountReceived(parseFloat(e.target.value) || 0)} 
                                 className="text-right font-mono"
                                 placeholder="0.00"
@@ -245,7 +245,7 @@ export default function POSPage() {
                          </div>
                      </div>
                      {amountReceived > 0 && (
-                         <div className={`flex justify-between font-bold text-base p-2 rounded-md ${changeDue >= 0 ? 'bg-primary/20 text-primary-foreground' : 'bg-destructive/20 text-destructive-foreground'}`}>
+                         <div className={`flex justify-between font-bold text-base p-2 rounded-md ${changeDue >= 0 ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
                            {changeDue >= 0 ? (
                                 <>
                                     <span>Change Due:</span>
