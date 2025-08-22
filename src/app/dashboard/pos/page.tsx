@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -8,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,7 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { Shirt, Footprints, Mouse, Vest, ShoppingCart, Minus, Plus } from 'lucide-react';
+import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus } from 'lucide-react';
 
 type CartItem = {
     id: string;
@@ -53,7 +53,7 @@ export default function POSPage() {
         'Shirts': <Shirt />,
         'Shoes': <Footprints />,
         'Accessories': <Mouse />,
-        'Tie': <Vest />,
+        'Tie': <Shirt />, // Corrected: Using Shirt as a fallback for Tie
         'Default': <ShoppingCart />
     };
 
