@@ -1,12 +1,14 @@
 
+
 "use client";
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MinusCircle, CreditCard, Smartphone, Banknote } from 'lucide-react';
+import { PlusCircle, MinusCircle, CreditCard, Smartphone, Banknote, Pencil } from 'lucide-react';
 import Image from 'next/image';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
@@ -23,19 +25,23 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AdjustPriceDialog } from './_components/adjust-price-dialog';
 
 
 export default function POSPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [showReceipt, setShowReceipt] = React.useState(false);
   const [lastTransaction, setLastTransaction] = React.useState<{ cart: CartItem[], total: number, paymentMethod: string, amountReceived: number, changeDue: number } | null>(null);
   const [amountReceived, setAmountReceived] = React.useState(0);
+  const [isAdjustPriceOpen, setIsAdjustPriceOpen] = React.useState(false);
+  const [itemToAdjust, setItemToAdjust] = React.useState<CartItem | null>(null);
 
   // In a real app, this would be fetched from business settings
   const taxRate = 8; 
 
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
   const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax;
   const changeDue = amountReceived > total ? amountReceived - total : 0;
@@ -61,7 +67,8 @@ export default function POSPage() {
           return prevCart;
         }
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      // Add new item with original price as currentPrice
+      return [...prevCart, { ...product, quantity: 1, currentPrice: product.price }];
     });
   };
 
@@ -78,6 +85,17 @@ export default function POSPage() {
         return acc;
       }, [] as CartItem[]);
     });
+  };
+
+  const handleOpenAdjustPrice = (item: CartItem) => {
+    setItemToAdjust(item);
+    setIsAdjustPriceOpen(true);
+  }
+
+  const handlePriceAdjust = (itemId: string, newPrice: number) => {
+    setCart(cart.map(item => item.id === itemId ? { ...item, currentPrice: newPrice } : item));
+    setIsAdjustPriceOpen(false);
+    setItemToAdjust(null);
   };
 
   const handleCheckout = (paymentMethod: string) => {
@@ -161,24 +179,30 @@ export default function POSPage() {
               <div className="grid gap-2 min-h-[120px] max-h-[30vh] overflow-y-auto pr-2">
                 {cart.length > 0 ? (
                   cart.map((item) => (
-                    <div key={item.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+                    <div key={item.id} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2">
+                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenAdjustPrice(item)}>
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                       </Button>
                       <div>
                         <div className="font-medium">{item.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          Ksh {item.price.toFixed(2)}
+                          Ksh {item.currentPrice.toFixed(2)}
+                          {item.currentPrice !== item.price && (
+                             <span className="line-through ml-2 text-destructive/80">{item.price.toFixed(2)}</span>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(item.id)}>
                           <MinusCircle className="h-4 w-4" />
                         </Button>
-                        <span>{item.quantity}</span>
+                        <span className="w-4 text-center">{item.quantity}</span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => addToCart(item)}>
                           <PlusCircle className="h-4 w-4" />
                         </Button>
                       </div>
                       <div className="text-right font-medium">
-                        Ksh {(item.price * item.quantity).toFixed(2)}
+                        Ksh {(item.currentPrice * item.quantity).toFixed(2)}
                       </div>
                     </div>
                   ))
@@ -261,6 +285,12 @@ export default function POSPage() {
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
+       <AdjustPriceDialog
+        item={itemToAdjust}
+        isOpen={isAdjustPriceOpen}
+        onOpenChange={setIsAdjustPriceOpen}
+        onPriceAdjust={handlePriceAdjust}
+      />
     </>
   );
 }

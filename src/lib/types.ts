@@ -1,4 +1,5 @@
 
+
 export type Product = {
   id: string;
   name: string;
@@ -16,6 +17,7 @@ export type Product = {
 
 export type CartItem = Product & {
   quantity: number;
+  currentPrice: number; // The price for this transaction, which can be adjusted
 };
 
 export type Sale = {

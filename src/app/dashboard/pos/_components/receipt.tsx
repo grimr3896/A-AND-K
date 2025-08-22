@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -15,7 +16,7 @@ type ReceiptProps = {
 };
 
 export function Receipt({ cart, total, taxRate, paymentMethod, amountReceived, changeDue }: ReceiptProps) {
-    const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
     const tax = subtotal * (taxRate / 100);
 
     return (
@@ -28,10 +29,18 @@ export function Receipt({ cart, total, taxRate, paymentMethod, amountReceived, c
             <Separator className="my-2 bg-black" />
             <div className="space-y-1">
                 {cart.map((item) => (
-                    <div key={item.id} className="flex justify-between">
-                        <span>{item.name} x{item.quantity}</span>
-                        <span>Ksh {(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
+                    <React.Fragment key={item.id}>
+                        <div className="flex justify-between">
+                            <span>{item.name} x{item.quantity}</span>
+                            <span>Ksh {(item.currentPrice * item.quantity).toFixed(2)}</span>
+                        </div>
+                        {item.currentPrice !== item.price && (
+                             <div className="flex justify-between pl-4 text-xs">
+                                <span>(Original: Ksh {item.price.toFixed(2)})</span>
+                                <span className="text-green-600">-{((item.price - item.currentPrice) * item.quantity).toFixed(2)}</span>
+                            </div>
+                        )}
+                    </React.Fragment>
                 ))}
             </div>
             <Separator className="my-2 bg-black" />
