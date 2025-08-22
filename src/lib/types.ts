@@ -8,6 +8,10 @@ export type Product = {
   lowStockThreshold: number;
 };
 
+export type CartItem = Product & {
+  quantity: number;
+};
+
 export type Sale = {
   id: string;
   date: string;
