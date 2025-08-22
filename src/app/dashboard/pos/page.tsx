@@ -24,7 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, CreditCard, Smartphone, DollarSign, StickyNote } from 'lucide-react';
+import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Receipt } from './_components/receipt';
 
@@ -40,7 +40,7 @@ type CartItem = {
 };
 
 type AgreementItem = {
-    id: string;
+    id:string;
     name: string;
     standardPrice: number;
     minPrice: number;
@@ -57,6 +57,14 @@ type CompletedSale = {
     changeDue: number;
 }
 
+type PendingTransaction = {
+    id: number;
+    items: CartItem[];
+    itemCount: number;
+    total: number;
+}
+
+
 export default function POSPage() {
     const { toast } = useToast();
     const [cart, setCart] = React.useState<CartItem[]>([]);
@@ -65,14 +73,15 @@ export default function POSPage() {
     const [paymentMethod, setPaymentMethod] = React.useState<string>('Cash');
     const [completedSale, setCompletedSale] = React.useState<CompletedSale | null>(null);
     const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
+    const [pendingTransactions, setPendingTransactions] = React.useState<PendingTransaction[]>([]);
 
     const productIcons: { [key: string]: React.ReactNode } = {
         'Dresses': <Shirt />,
         'Trousers': <Shirt />,
         'Shirts': <Shirt />,
+        'Tie': <Shirt />, // Using Shirt as fallback for Tie
         'Shoes': <Footprints />,
         'Accessories': <Mouse />,
-        'Tie': <Shirt />,
         'Default': <ShoppingCart />
     };
 
@@ -175,10 +184,7 @@ export default function POSPage() {
             const newQuantity = item.quantity + delta;
 
             if (newQuantity <= 0) {
-                const newCart = prevCart.filter(i => i.id !== productId);
-                const newAgreementTable = agreementTable.filter(a => a.id !== productId);
-                setAgreementTable(newAgreementTable);
-                return newCart;
+                return deleteItem(productId, prevCart);
             }
             if (newQuantity > item.stock) {
                 toast({ variant: 'destructive', title: 'Out of Stock', description: `Only ${item.stock} of ${item.name} available.` });
@@ -190,12 +196,26 @@ export default function POSPage() {
             return newCart;
         });
     };
+
+    const deleteItem = (productId: string, currentCart: CartItem[] = cart) => {
+        const newCart = currentCart.filter(i => i.id !== productId);
+        setAgreementTable(agreementTable.filter(a => a.id !== productId));
+        setCart(newCart);
+        return newCart;
+    }
     
     const subtotal = React.useMemo(() => cart.reduce((acc, item) => acc + item.agreedPrice * item.quantity, 0), [cart]);
     const taxRate = 0.08;
     const tax = subtotal * taxRate;
     const total = subtotal + tax;
     const changeDue = amountReceived - total;
+
+    const resetSale = () => {
+        setCart([]);
+        setAgreementTable([]);
+        setAmountReceived(0);
+        setPaymentMethod('Cash');
+    }
 
     const handleCheckout = () => {
         if(cart.length === 0) {
@@ -220,12 +240,53 @@ export default function POSPage() {
         setCompletedSale(saleData);
         setIsReceiptOpen(true);
 
-        // Reset state for next sale
-        setCart([]);
-        setAgreementTable([]);
-        setAmountReceived(0);
-        setPaymentMethod('Cash');
+        // In a real app, you would also save the sale to a database here.
+        console.log("Sale Saved:", saleData);
+
+        resetSale();
     };
+
+    const handleSuspend = () => {
+        if(cart.length === 0) {
+            toast({ variant: 'destructive', title: 'Cart Empty', description: 'Cannot suspend an empty cart.' });
+            return;
+        }
+
+        const newPendingTx: PendingTransaction = {
+            id: Date.now(),
+            items: [...cart],
+            itemCount: cart.reduce((acc, item) => acc + item.quantity, 0),
+            total: total
+        };
+
+        setPendingTransactions(prev => [...prev, newPendingTx]);
+        toast({ title: 'Order Suspended', description: `Order with ${newPendingTx.itemCount} items suspended.` });
+        resetSale();
+    }
+
+    const handleResume = (txId: number) => {
+        if (cart.length > 0) {
+            toast({ variant: 'destructive', title: 'Active Cart', description: 'Please clear or complete the current sale before resuming another.' });
+            return;
+        }
+
+        const txToResume = pendingTransactions.find(tx => tx.id === txId);
+        if (txToResume) {
+            setCart(txToResume.items);
+            // Re-populate agreement table
+            const newAgreementTable = txToResume.items.map(item => ({
+                id: item.id,
+                name: item.name,
+                standardPrice: item.price,
+                minPrice: item.minPrice,
+                agreedPrice: item.agreedPrice,
+            }));
+            setAgreementTable(newAgreementTable);
+            setPendingTransactions(prev => prev.filter(tx => tx.id !== txId));
+            toast({ title: 'Order Resumed', description: 'The suspended order has been loaded into the cart.' });
+        }
+    }
+
 
     return (
         <>
@@ -308,14 +369,23 @@ export default function POSPage() {
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto pr-2">
                         {cart.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className="space-y-2">
                                 {cart.map(item => (
-                                    <div key={item.id} className="flex items-center gap-4">
+                                    <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                         <div className="flex-grow">
                                             <p className="font-semibold">{item.name}</p>
-                                            <p className="text-sm text-primary">
-                                               Ksh {item.agreedPrice.toFixed(2)}
-                                            </p>
+                                            <div className='flex items-center gap-2'>
+                                                <span className="text-sm">Ksh</span>
+                                                <Input
+                                                    type="number"
+                                                    value={item.agreedPrice}
+                                                    data-id={item.id}
+                                                    onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                                                    onBlur={validatePrice}
+                                                    className="h-7 w-24 text-sm"
+                                                    min={item.minPrice}
+                                                />
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => updateQuantity(item.id, -1)}>
@@ -329,6 +399,9 @@ export default function POSPage() {
                                         <div className="font-mono w-24 text-right">
                                             Ksh {(item.agreedPrice * item.quantity).toFixed(2)}
                                         </div>
+                                        <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full text-destructive hover:text-destructive" onClick={() => deleteItem(item.id)}>
+                                            <Trash2 className="h-4 w-4"/>
+                                        </Button>
                                     </div>
                                 ))}
                             </div>
@@ -379,26 +452,47 @@ export default function POSPage() {
                                        <Button variant={paymentMethod === 'Cash' ? 'default' : 'outline'} onClick={() => setPaymentMethod('Cash')}><DollarSign/>Cash</Button>
                                        <Button variant={paymentMethod === 'M-Pesa' ? 'default' : 'outline'} onClick={() => setPaymentMethod('M-Pesa')}><Smartphone/>M-Pesa</Button>
                                        <Button variant={paymentMethod === 'Card' ? 'default' : 'outline'} onClick={() => setPaymentMethod('Card')}><CreditCard/>Card</Button>
-                                       <Button variant={paymentMethod === 'Layaway' ? 'default' : 'outline'} onClick={() => setPaymentMethod('Layaway')}><StickyNote/>Layaway</Button>
+                                       <Button variant='outline' disabled><StickyNote/>Layaway</Button>
                                     </div>
                                 </div>
                              </div>
-                            <Button size="lg" className="w-full" disabled={cart.length === 0} onClick={handleCheckout}>
-                                Checkout
-                            </Button>
+                             <div className='grid grid-cols-2 gap-2'>
+                                <Button size="lg" variant="outline" onClick={handleSuspend}>
+                                    <PauseCircle className="mr-2 h-4 w-4" />
+                                    Suspend
+                                </Button>
+                                <Button size="lg" className="w-full" disabled={cart.length === 0} onClick={handleCheckout}>
+                                    Checkout
+                                </Button>
+                             </div>
                         </CardFooter>
                     )}
                 </Card>
-
-                {/* Pending Transactions Section */}
+            </div>
+             {/* Pending Transactions Section */}
+            <div className="lg:col-span-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Pending</CardTitle>
+                        <CardTitle>Pending Transactions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="border-2 border-dashed rounded-lg min-h-[100px] flex items-center justify-center">
-                            <p className="text-muted-foreground">Pending transactions will appear here</p>
-                        </div>
+                        {pendingTransactions.length > 0 ? (
+                            <div className="space-y-2">
+                                {pendingTransactions.map(tx => (
+                                    <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg bg-amber-50 dark:bg-amber-900/10">
+                                        <div>
+                                            <p className="font-semibold">Suspended Sale</p>
+                                            <p className="text-sm text-muted-foreground">{tx.itemCount} items - Total: Ksh {tx.total.toFixed(2)}</p>
+                                        </div>
+                                        <Button size="sm" onClick={() => handleResume(tx.id)}>Resume</Button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                             <div className="border-2 border-dashed rounded-lg min-h-[100px] flex items-center justify-center">
+                                <p className="text-muted-foreground">Suspended transactions will appear here</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
