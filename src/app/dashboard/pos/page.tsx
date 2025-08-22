@@ -38,12 +38,7 @@ export default function POSPage() {
   const [isAdjustPriceOpen, setIsAdjustPriceOpen] = React.useState(false);
   const [itemToAdjust, setItemToAdjust] = React.useState<CartItem | null>(null);
 
-  // In a real app, this would be fetched from business settings
-  const taxRate = 8; 
-
-  const subtotal = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
-  const tax = subtotal * (taxRate / 100);
-  const total = subtotal + tax;
+  const total = cart.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
   const changeDue = amountReceived > total ? amountReceived - total : 0;
   
   React.useEffect(() => {
@@ -214,15 +209,6 @@ export default function POSPage() {
               </div>
               <Separator />
               <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>Ksh {subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax ({taxRate}%)</span>
-                  <span>Ksh {tax.toFixed(2)}</span>
-                </div>
-                <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>Ksh {total.toFixed(2)}</span>
@@ -270,11 +256,11 @@ export default function POSPage() {
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h3 className="font-bold text-center mb-2">Customer Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
+                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
                         </div>
                         <div className="page-break-before">
                           <h3 className="font-bold text-center mb-2">Store Copy</h3>
-                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} taxRate={taxRate} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
+                          <Receipt cart={lastTransaction.cart} total={lastTransaction.total} paymentMethod={lastTransaction.paymentMethod} amountReceived={lastTransaction.amountReceived} changeDue={lastTransaction.changeDue} />
                         </div>
                       </div>
                   )}
