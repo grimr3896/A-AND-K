@@ -52,7 +52,7 @@ export default function DashboardLayout({
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-primary">
               <Flower2 className="h-6 w-6" />
-              <span className="font-headline">BloomPOS</span>
+              <span className="font-headline">A & K babyshop</span>
             </Link>
           </div>
           <nav className="flex-1 overflow-auto px-2 text-sm font-medium lg:px-4">
@@ -98,7 +98,7 @@ export default function DashboardLayout({
                   className="flex items-center gap-2 text-lg font-semibold text-primary mb-4"
                 >
                   <Flower2 className="h-6 w-6" />
-                  <span className="sr-only">BloomPOS</span>
+                  <span className="sr-only">A & K babyshop</span>
                 </Link>
                 {navLinks.map(({ href, label, icon: Icon }) => (
                   <Link

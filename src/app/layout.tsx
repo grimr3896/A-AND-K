@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'BloomPOS',
+  title: 'A & K babyshop',
   description: 'Point of Sale and Inventory Management System',
 };
 

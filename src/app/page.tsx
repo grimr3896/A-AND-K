@@ -7,7 +7,7 @@ export default function LoginPage() {
       <div className="flex w-full max-w-sm flex-col items-center space-y-6">
         <div className="flex items-center space-x-2 text-primary">
           <Flower2 className="h-10 w-10" />
-          <h1 className="text-4xl font-bold font-headline">BloomPOS</h1>
+          <h1 className="text-4xl font-bold font-headline">A & K babyshop</h1>
         </div>
         <p className="text-center text-muted-foreground">
           Welcome back! Please enter your credentials to access your dashboard.

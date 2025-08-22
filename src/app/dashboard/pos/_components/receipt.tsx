@@ -17,7 +17,7 @@ export function Receipt({ cart, total, paymentMethod }: ReceiptProps) {
     return (
         <div className="bg-white text-black p-4 rounded-lg shadow-md font-mono text-sm w-full max-w-sm mx-auto border">
             <div className="text-center mb-4">
-                <h2 className="text-xl font-bold">BloomPOS</h2>
+                <h2 className="text-xl font-bold">A & K babyshop</h2>
                 <p>123 Blossom Lane, Garden City</p>
                 <p>Date: {new Date().toLocaleString()}</p>
             </div>
