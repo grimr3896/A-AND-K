@@ -29,7 +29,18 @@ import type { Product, CartItem } from '@/lib/types';
 import { MinusCircle, PlusCircle, Printer, Trash2, RotateCcw, PauseCircle, CornerUpLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Receipt } from './_components/receipt';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
+
 
 type PendingCart = {
   id: string;
@@ -367,7 +378,7 @@ export default function POSPage() {
                   </div>
                 </div>
                 {amountReceived > 0 && (
-                  <div className={`flex justify-between font-bold text-base p-2 rounded-md ${changeDue >= 0 ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
+                  <div className={`flex justify-between font-bold text-base p-2 rounded-md ${changeDue >= 0 ? 'text-primary' : 'text-destructive'}`}>
                     {changeDue >= 0 ? (
                       <>
                         <span>Change Due:</span>
