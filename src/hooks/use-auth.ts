@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -6,6 +7,7 @@ import type { User, UserRole } from '@/lib/types';
 
 export function useAuth() {
   const [user, setUser] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -15,15 +17,18 @@ export function useAuth() {
         setUser(JSON.parse(storedUser));
       } else {
         // Redirect to login if no user is found in localStorage
-        // router.push('/');
+        router.push('/');
       }
     } catch (error) {
         // This can happen if running on the server, just ignore.
+    } finally {
+        setIsLoading(false);
     }
   }, [router]);
 
   const hasRole = (roles: UserRole[]) => {
-    return user && roles.includes(user.role);
+    if (isLoading || !user) return false;
+    return roles.includes(user.role);
   };
 
   const logout = () => {
@@ -32,5 +37,5 @@ export function useAuth() {
     router.push('/');
   };
 
-  return { user, hasRole, logout };
+  return { user, hasRole, logout, isLoading };
 }

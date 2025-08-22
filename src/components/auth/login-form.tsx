@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { mockUsers } from '@/lib/mock-data';
+import { mockUsers, getAdminPassword } from '@/lib/mock-data';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -28,9 +29,6 @@ export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
-
-  // This would ideally be fetched from your backend/state management
-  const [adminPassword, setAdminPassword] = React.useState("ALEXA");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,6 +44,7 @@ export function LoginForm() {
     // Simulate API call
     setTimeout(() => {
       const user = mockUsers.find(u => u.username.toLowerCase() === values.username.toLowerCase());
+      const adminPassword = getAdminPassword();
 
       if (user && values.password === adminPassword) {
         // In a real app, you'd use a more secure session management system.

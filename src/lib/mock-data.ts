@@ -1,4 +1,17 @@
+
 import type { Product, Sale, Layaway, Customer, AuditLog, User } from './types';
+
+// In a real app, this would be managed securely in a database.
+// For this prototype, we simulate a single source of truth for the password.
+let currentAdminPassword = "ALEXA";
+
+export const getAdminPassword = () => currentAdminPassword;
+
+export const setAdminPassword = (newPassword: string) => {
+  currentAdminPassword = newPassword;
+  return true;
+};
+
 
 export const mockProducts: Product[] = [
   { id: 'PROD001', name: 'Floral Tea Dress', sku: 'TD-FL-01', category: 'Dresses', stock: 12, price: 5999, lowStockThreshold: 5, cost: 3500, minPrice: 5500, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Fashion House', description: 'A beautiful floral tea dress for sunny days.' },

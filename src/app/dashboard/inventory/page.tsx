@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
-import { mockProducts as initialProducts } from '@/lib/mock-data';
+import { mockProducts as initialProducts, getAdminPassword } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
 import { AddProductDialog } from './_components/add-product-dialog';
 import Image from 'next/image';
@@ -54,7 +54,7 @@ export default function InventoryPage() {
   const { toast } = useToast();
 
   const handlePasswordSubmit = () => {
-    if (passwordInput === 'ALEXA') {
+    if (passwordInput === getAdminPassword()) {
       setPasswordPrompt(false);
       setPasswordInput('');
       actionToConfirm?.();
@@ -263,6 +263,3 @@ export default function InventoryPage() {
     </>
   );
 }
-
-
-    

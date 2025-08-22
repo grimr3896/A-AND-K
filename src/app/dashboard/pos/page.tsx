@@ -422,7 +422,7 @@ export default function POSPage() {
                                         <TableHead>Price</TableHead>
                                         <TableHead>Qty</TableHead>
                                         <TableHead>Total</TableHead>
-                                        <TableHead>Actions</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -454,7 +454,7 @@ export default function POSPage() {
                                             <TableCell className="font-mono text-right">
                                                 {(item.agreedPrice * item.quantity).toFixed(2)}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-right">
                                                 <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full text-destructive hover:text-destructive" onClick={() => deleteItem(item.id)}>
                                                     <Trash2 className="h-4 w-4"/>
                                                 </Button>

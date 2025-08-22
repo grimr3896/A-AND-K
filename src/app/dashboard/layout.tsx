@@ -18,6 +18,7 @@ import {
   ShoppingCart,
   TrendingUp,
   Warehouse,
+  Loader2,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -38,7 +39,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, hasRole, logout } = useAuth();
+  const { user, hasRole, logout, isLoading } = useAuth();
   
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff'] },
@@ -55,13 +56,18 @@ export default function DashboardLayout({
 
   const accessibleLinks = navLinks.filter(link => hasRole(link.roles as any));
 
-  if (!user) {
-    // You can render a loading state here
+  if (isLoading) {
     return (
         <div className="flex h-screen items-center justify-center">
-            <p>Loading...</p>
+            <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     );
+  }
+
+  if (!user) {
+    // This part should ideally not be reached if the useAuth hook redirects properly.
+    // It's a fallback.
+    return null;
   }
 
   return (

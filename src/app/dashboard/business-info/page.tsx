@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { getAdminPassword, setAdminPassword } from '@/lib/mock-data';
 
 type BusinessInfo = {
   [key: string]: string | number;
@@ -43,7 +44,7 @@ export default function BusinessInfoPage() {
         "Business Name": "A & K babyshop",
         "Address": "123 Blossom Lane, Garden City",
         "Tax Rate (%)": 8,
-        "Admin Login Password": "ALEXA",
+        "Admin Login Password": getAdminPassword(),
         "API Key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     });
     const [editingField, setEditingField] = React.useState<string | null>(null);
@@ -73,7 +74,7 @@ export default function BusinessInfoPage() {
     };
 
     const handlePasswordSubmit = () => {
-        if (passwordInput === businessInfo['Admin Login Password']) {
+        if (passwordInput === getAdminPassword()) {
             setPasswordPrompt(false);
             setPasswordInput('');
             actionToConfirm?.();
@@ -95,15 +96,18 @@ export default function BusinessInfoPage() {
     const handleSave = () => {
       if(editingField){
         const oldPassword = businessInfo["Admin Login Password"];
-        setBusinessInfo(prev => ({ ...prev, [editingField]: tempValue }));
-
-        if(editingField === "Admin Login Password" && tempValue !== oldPassword) {
-          toast({
-            title: "Security Notice",
-            description: `Password changed successfully. The new password is "${tempValue}". Please use this for future logins and protected actions.`,
-            duration: 9000,
-          });
+        
+        if (editingField === "Admin Login Password") {
+            const newPassword = tempValue as string;
+            setAdminPassword(newPassword);
+            setBusinessInfo(prev => ({ ...prev, [editingField]: newPassword }));
+            toast({
+                title: "Security Notice",
+                description: `Password changed successfully. The new password is "${newPassword}". Please use this for future logins and protected actions.`,
+                duration: 9000,
+            });
         } else {
+           setBusinessInfo(prev => ({ ...prev, [editingField]: tempValue }));
            toast({
             title: "Success!",
             description: `${editingField} has been updated.`,
