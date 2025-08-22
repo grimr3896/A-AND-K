@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,7 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus } from 'lucide-react';
+import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, UserTie } from 'lucide-react';
 
 type CartItem = {
     id: string;
@@ -49,11 +50,11 @@ export default function POSPage() {
 
     const productIcons: { [key: string]: React.ReactNode } = {
         'Dresses': <Shirt />,
-        'Trousers': <Shirt />, 
+        'Trousers': <Shirt />,
         'Shirts': <Shirt />,
         'Shoes': <Footprints />,
         'Accessories': <Mouse />,
-        'Tie': <Shirt />, // Corrected: Using Shirt as a fallback for Tie
+        'Tie': <Shirt />,
         'Default': <ShoppingCart />
     };
 
@@ -69,14 +70,18 @@ export default function POSPage() {
                 toast({ variant: 'destructive', title: 'Out of Stock', description: `No more ${product.name} in stock.` });
             }
         } else {
-            setCart(prev => [...prev, { 
-                id: product.id, 
-                name: product.name, 
-                quantity: 1, 
-                agreedPrice: product.price, 
-                stock: product.stock,
-                category: product.category,
-            }]);
+            if (product.stock > 0) {
+                setCart(prev => [...prev, { 
+                    id: product.id, 
+                    name: product.name, 
+                    quantity: 1, 
+                    agreedPrice: product.price, 
+                    stock: product.stock,
+                    category: product.category,
+                }]);
+            } else {
+                 toast({ variant: 'destructive', title: 'Out of Stock', description: `${product.name} is out of stock.` });
+            }
         }
 
         if (!agreementTable.find(item => item.id === product.id)) {
@@ -90,34 +95,40 @@ export default function POSPage() {
         }
     };
     
+    React.useEffect(() => {
+        agreementTable.forEach(item => {
+            if (item.agreedPrice < item.minPrice) {
+                 toast({
+                    variant: "destructive",
+                    title: "Price Error",
+                    description: `Agreed price for ${item.name} cannot be less than Ksh ${item.minPrice.toFixed(2)}.`
+                });
+            }
+        });
+    }, [agreementTable, toast]);
+
+
     const handlePriceChange = (productId: string, newPriceStr: string) => {
         const newPrice = parseFloat(newPriceStr);
+        let finalPrice = newPrice;
+        
+        const agreementItem = agreementTable.find(a => a.id === productId);
+        if(!agreementItem) return;
+
+        if (isNaN(newPrice) || newPrice < agreementItem.minPrice) {
+            finalPrice = agreementItem.minPrice;
+        }
+
         setAgreementTable(currentTable => 
-            currentTable.map(item => {
-                if (item.id === productId) {
-                    if (isNaN(newPrice) || newPrice < item.minPrice) {
-                        toast({
-                            variant: "destructive",
-                            title: "Price Error",
-                            description: `Agreed price for ${item.name} cannot be less than Ksh ${item.minPrice.toFixed(2)}.`
-                        });
-                        return { ...item, agreedPrice: item.minPrice };
-                    }
-                    return { ...item, agreedPrice: newPrice };
-                }
-                return item;
-            })
+            currentTable.map(item =>
+                item.id === productId ? { ...item, agreedPrice: finalPrice } : item
+            )
         );
 
         setCart(currentCart => 
-            currentCart.map(item => {
-                if (item.id === productId) {
-                    const agreementItem = agreementTable.find(a => a.id === productId);
-                    const finalPrice = (newPrice >= (agreementItem?.minPrice ?? 0)) ? newPrice : (agreementItem?.minPrice ?? 0);
-                    return { ...item, agreedPrice: finalPrice };
-                }
-                return item;
-            })
+            currentCart.map(item => 
+                item.id === productId ? { ...item, agreedPrice: finalPrice } : item
+            )
         );
     };
 
@@ -177,7 +188,7 @@ export default function POSPage() {
                         {mockProducts.map((product) => (
                             <button key={product.id} onClick={() => addProductToCart(product)} className="flex flex-col items-center justify-center p-3 border rounded-lg hover:bg-muted transition-colors text-center">
                                  <div className="text-primary mb-2">
-                                    {productIcons[product.name] || productIcons[product.category] || productIcons['Default']}
+                                    {productIcons[product.category] || productIcons['Default']}
                                 </div>
                                 <p className="text-sm font-medium">{product.name}</p>
                             </button>
@@ -211,6 +222,7 @@ export default function POSPage() {
                                                 type="number"
                                                 value={item.agreedPrice}
                                                 onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                                                onBlur={(e) => handlePriceChange(item.id, e.target.value)}
                                                 className="h-8"
                                                 min={item.minPrice}
                                             />
@@ -244,9 +256,9 @@ export default function POSPage() {
                                 {cart.map(item => (
                                     <div key={item.id} className="flex items-center gap-4">
                                         <div className="flex-grow">
-                                            <p className="font-semibold">{item.name} {item.quantity > 1 ? `(x${item.quantity})` : ''}</p>
+                                            <p className="font-semibold">{item.name}</p>
                                             <p className="text-sm text-primary">
-                                               {item.quantity} @ Ksh {item.agreedPrice.toFixed(2)}
+                                               {item.quantity} x Ksh {item.agreedPrice.toFixed(2)}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -306,3 +318,5 @@ export default function POSPage() {
         </div>
     );
 }
+
+    
