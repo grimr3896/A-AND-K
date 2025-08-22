@@ -29,7 +29,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = React.useState(false);
 
   // This would ideally be fetched from your backend/state management
-  const [adminPassword, setAdminPassword] = React.useState("CALEXA");
+  const [adminPassword, setAdminPassword] = React.useState("KINGORCA");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
