@@ -24,7 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, UserTie, CreditCard, Smartphone, DollarSign, StickyNote } from 'lucide-react';
+import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, CreditCard, Smartphone, DollarSign, StickyNote } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Receipt } from './_components/receipt';
 
@@ -72,7 +72,7 @@ export default function POSPage() {
         'Shirts': <Shirt />,
         'Shoes': <Footprints />,
         'Accessories': <Mouse />,
-        'Tie': <UserTie />,
+        'Tie': <Shirt />,
         'Default': <ShoppingCart />
     };
 
@@ -116,15 +116,14 @@ export default function POSPage() {
     };
     
     React.useEffect(() => {
-        agreementTable.forEach(item => {
-            if (item.agreedPrice < item.minPrice) {
-                 toast({
-                    variant: "destructive",
-                    title: "Price Error",
-                    description: `Agreed price for ${item.name} cannot be less than Ksh ${item.minPrice.toFixed(2)}.`
-                });
-            }
-        });
+        const priceErrors = agreementTable.some(item => item.agreedPrice < item.minPrice);
+        if(priceErrors) {
+            toast({
+                variant: "destructive",
+                title: "Price Error",
+                description: `One or more items have a price below the minimum allowed.`
+            });
+        }
     }, [agreementTable, toast]);
 
 
@@ -137,16 +136,7 @@ export default function POSPage() {
         if (isNaN(newPrice)) {
             newPrice = agreementItem.agreedPrice; // Keep old price if input is invalid
         }
-
-        if (newPrice < agreementItem.minPrice) {
-            toast({
-                variant: 'destructive',
-                title: 'Price Alert',
-                description: `Price for ${agreementItem.name} cannot be below minimum of Ksh ${agreementItem.minPrice.toFixed(2)}`,
-            });
-            newPrice = agreementItem.minPrice;
-        }
-
+        
         setAgreementTable(currentTable => 
             currentTable.map(item =>
                 item.id === productId ? { ...item, agreedPrice: newPrice } : item
@@ -159,6 +149,22 @@ export default function POSPage() {
             )
         );
     };
+    
+     const validatePrice = (e: React.FocusEvent<HTMLInputElement>) => {
+        const newPrice = parseFloat(e.target.value);
+        const productId = e.target.dataset.id!;
+        const agreementItem = agreementTable.find(a => a.id === productId);
+
+        if (agreementItem && newPrice < agreementItem.minPrice) {
+            toast({
+                variant: 'destructive',
+                title: 'Price Alert',
+                description: `Price for ${agreementItem.name} cannot be below minimum of Ksh ${agreementItem.minPrice.toFixed(2)}`,
+            });
+             handlePriceChange(productId, agreementItem.minPrice.toString());
+        }
+    };
+
 
     const updateQuantity = (productId: string, delta: number) => {
         setCart(prevCart => {
@@ -268,8 +274,9 @@ export default function POSPage() {
                                             <Input
                                                 type="number"
                                                 value={item.agreedPrice}
+                                                data-id={item.id}
                                                 onChange={(e) => handlePriceChange(item.id, e.target.value)}
-                                                onBlur={(e) => handlePriceChange(item.id, e.target.value)}
+                                                onBlur={validatePrice}
                                                 className="h-8"
                                                 min={item.minPrice}
                                             />
