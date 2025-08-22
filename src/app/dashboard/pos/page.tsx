@@ -24,8 +24,8 @@ import { Separator } from '@/components/ui/separator';
 import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle } from 'lucide-react';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer } from 'lucide-react';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Receipt } from './_components/receipt';
 
 type CartItem = {
@@ -74,6 +74,8 @@ export default function POSPage() {
     const [completedSale, setCompletedSale] = React.useState<CompletedSale | null>(null);
     const [isReceiptOpen, setIsReceiptOpen] = React.useState(false);
     const [pendingTransactions, setPendingTransactions] = React.useState<PendingTransaction[]>([]);
+    const receiptRef = React.useRef<HTMLDivElement>(null);
+
 
     const productIcons: { [key: string]: React.ReactNode } = {
         'Dresses': <Shirt />,
@@ -216,6 +218,36 @@ export default function POSPage() {
         setAmountReceived(0);
         setPaymentMethod('Cash');
     }
+    
+    const handlePrintReceipt = () => {
+        const printContent = receiptRef.current?.innerHTML;
+        if (printContent) {
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow?.document.write('<html><head><title>Print Receipt</title>');
+            printWindow?.document.write(`
+                <style>
+                    body { font-family: monospace; font-size: 10pt; }
+                    .flex { display: flex; }
+                    .justify-between { justify-content: space-between; }
+                    .text-center { text-align: center; }
+                    .font-bold { font-weight: bold; }
+                    .mb-4 { margin-bottom: 1rem; }
+                    .my-2 { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+                    .space-y-1 > * + * { margin-top: 0.25rem; }
+                    .text-green-600 { color: #16a34a; }
+                    .text-xs { font-size: 0.75rem; }
+                    .pl-4 { padding-left: 1rem; }
+                    hr { border: none; border-top: 1px dashed black; }
+                </style>
+            `);
+            printWindow?.document.write('</head><body>');
+            printWindow?.document.write(printContent);
+            printWindow?.document.write('</body></html>');
+            printWindow?.document.close();
+            printWindow?.print();
+        }
+    };
+
 
     const handleCheckout = () => {
         if(cart.length === 0) {
@@ -504,15 +536,19 @@ export default function POSPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Transaction Complete</AlertDialogTitle>
                     </AlertDialogHeader>
-                    <Receipt {...completedSale} />
-                    <AlertDialogAction onClick={() => setIsReceiptOpen(false)}>
-                        New Sale
-                    </AlertDialogAction>
+                    <Receipt ref={receiptRef} {...completedSale} />
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setIsReceiptOpen(false)}>
+                            New Sale
+                        </AlertDialogCancel>
+                        <AlertDialogAction onClick={handlePrintReceipt}>
+                           <Printer className="mr-2 h-4 w-4" />
+                           Print Receipt
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         )}
         </>
     );
 }
-
-    

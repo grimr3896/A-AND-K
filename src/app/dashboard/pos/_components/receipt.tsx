@@ -15,9 +15,10 @@ type ReceiptProps = {
     changeDue: number;
 };
 
-export function Receipt({ cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue }: ReceiptProps) {
+export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
+  ({ cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue }, ref) => {
     return (
-        <div className="bg-white text-black p-4 rounded-lg shadow-md font-mono text-sm w-full max-w-sm mx-auto border">
+        <div ref={ref} className="bg-white text-black p-4 rounded-lg shadow-md font-mono text-sm w-full max-w-sm mx-auto border">
             <div className="text-center mb-4">
                 <h2 className="text-xl font-bold">A & K babyshop</h2>
                 <p>123 Blossom Lane, Garden City</p>
@@ -78,6 +79,7 @@ export function Receipt({ cart, subtotal, tax, total, paymentMethod, amountRecei
             </div>
         </div>
     );
-}
+  }
+);
 
-    
+Receipt.displayName = "Receipt";
