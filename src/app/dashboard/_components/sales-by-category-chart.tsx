@@ -8,15 +8,11 @@ import {
 } from '@/components/ui/chart';
 
 const salesByCategoryData = [
-  { category: 'Clothes', sales: 35, fill: 'var(--color-clothes)' },
-  { category: 'Accessories', sales: 15, fill: 'var(--color-accessories)' },
-  { category: 'Blankets', sales: 10, fill: 'var(--color-blankets)' },
-  { category: 'Shoes', sales: 8, fill: 'var(--color-shoes)' },
-  { category: 'Bags', sales: 7, fill: 'var(--color-bags)' },
-  { category: 'Nursing', sales: 10, fill: 'var(--color-nursing)' },
-  { category: 'Gear', sales: 5, fill: 'var(--color-gear)' },
-  { category: 'Toys', sales: 5, fill: 'var(--color-toys)' },
-  { category: 'Diapering', sales: 5, fill: 'var(--color-diapering)' },
+  { category: 'Clothes', sales: 45, fill: 'var(--color-clothes)' },
+  { category: 'Accessories', sales: 20, fill: 'var(--color-accessories)' },
+  { category: 'Blankets', sales: 15, fill: 'var(--color-blankets)' },
+  { category: 'Shoes', sales: 12, fill: 'var(--color-shoes)' },
+  { category: 'Bags', sales: 8, fill: 'var(--color-bags)' },
 ];
 
 const chartConfig = {
@@ -43,22 +39,6 @@ const chartConfig = {
     label: 'Bags',
     color: 'hsl(var(--chart-5))',
   },
-  nursing: {
-    label: 'Nursing',
-    color: 'hsl(var(--chart-2))', // Re-using colors for simplicity
-  },
-  gear: {
-    label: 'Gear',
-    color: 'hsl(var(--chart-3))',
-  },
-  toys: {
-    label: 'Toys',
-    color: 'hsl(var(--chart-4))',
-  },
-  diapering: {
-    label: 'Diapering',
-    color: 'hsl(var(--chart-5))',
-  },
 };
 
 export function SalesByCategoryChart() {
@@ -68,7 +48,7 @@ export function SalesByCategoryChart() {
         <Tooltip
           content={<ChartTooltipContent
             nameKey="category"
-            formatter={(value, name) => `${value}%`}
+            formatter={(value) => `${value}%`}
           />}
         />
         <Pie

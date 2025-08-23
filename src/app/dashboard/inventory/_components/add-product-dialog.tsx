@@ -54,6 +54,8 @@ type AddProductDialogProps = {
   productToEdit?: Product | null;
 };
 
+const productCategories = ['Clothes', 'Accessories', 'Blankets', 'Shoes', 'Bags'];
+
 export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, productToEdit }: AddProductDialogProps) {
   const { toast } = useToast();
   const { products } = useProducts();
@@ -117,8 +119,6 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
     const action = productToEdit ? 'updated' : 'added';
     toast({ title: 'Success', description: `Product "${values.name}" has been ${action}.` });
   }
-  
-  const categories = React.useMemo(() => [...new Set(products.map(p => p.category))], [products]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -178,7 +178,7 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                        {productCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />

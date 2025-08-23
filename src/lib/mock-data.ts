@@ -24,7 +24,6 @@ export const mockProducts: Product[] = [
   
   // Accessories
   { id: 'PROD003', name: 'Knit Baby Booties', sku: 'AC-KB-03', category: 'Accessories', stock: 60, price: 1500, lowStockThreshold: 20, cost: 800, minPrice: 1400, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Baby Threads Co.', description: 'Hand-knitted baby booties to keep little feet warm.' },
-  { id: 'PROD009', name: 'Nursing Cover Scarf', sku: 'AC-NC-04', category: 'Accessories', stock: 30, price: 2500, lowStockThreshold: 10, cost: 1400, minPrice: 2300, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Mommy Style', description: 'A stylish and discreet nursing cover that doubles as a scarf.' },
   { id: 'PROD021', name: 'Sun Hat with UV Protection', sku: 'AC-SH-05', category: 'Accessories', stock: 50, price: 1800, lowStockThreshold: 15, cost: 900, minPrice: 1600, imageUrl: 'https://placehold.co/150x150.png', supplier: 'SunSafe Kids', description: 'A wide-brimmed sun hat with UPF 50+ protection.' },
   
   // Blankets
@@ -38,45 +37,22 @@ export const mockProducts: Product[] = [
   // Bags
   { id: 'PROD026', name: 'Diaper Bag Backpack', sku: 'BG-DB-01', category: 'Bags', stock: 25, price: 8500, lowStockThreshold: 5, cost: 5000, minPrice: 8000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'MomGo', description: 'A spacious and stylish diaper bag with multiple compartments.' },
   { id: 'PROD027', name: 'Toddler Character Backpack', sku: 'BG-TB-02', category: 'Bags', stock: 40, price: 2500, lowStockThreshold: 10, cost: 1400, minPrice: 2300, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Playful Packs', description: 'A cute and fun backpack for your toddler\'s essentials.' },
-
-  // Nursing & Feeding
-  { id: 'PROD006', name: 'Silicone Bib with Food Catcher', sku: 'NF-SB-01', category: 'Nursing', stock: 70, price: 1200, lowStockThreshold: 25, cost: 600, minPrice: 1100, imageUrl: 'https://placehold.co/150x150.png', supplier: 'FeedEasy', description: 'Easy to clean, BPA-free silicone bib with a pocket.' },
-  { id: 'PROD007', name: 'Electric Breast Pump (Single)', sku: 'NF-BP-02', category: 'Nursing', stock: 15, price: 12500, lowStockThreshold: 5, cost: 8000, minPrice: 12000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'MomTech', description: 'Efficient and quiet single electric breast pump.' },
-  { id: 'PROD008', name: 'Anti-Colic Baby Bottles (2-pack)', sku: 'NF-BB-03', category: 'Nursing', stock: 80, price: 2200, lowStockThreshold: 20, cost: 1200, minPrice: 2000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'FeedEasy', description: 'Designed to reduce colic, gas, and reflux.' },
-
-  // Gear
-  { id: 'PROD010', name: '3-in-1 Baby Stroller System', sku: 'GE-ST-01', category: 'Gear', stock: 12, price: 45000, lowStockThreshold: 3, cost: 30000, minPrice: 42000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'GoBabyGo', description: 'A versatile stroller system that grows with your baby.' },
-  { id: 'PROD011', name: 'Ergonomic Baby Carrier', sku: 'GE-BC-02', category: 'Gear', stock: 20, price: 9500, lowStockThreshold: 5, cost: 6000, minPrice: 9000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'CarryTots', description: 'Comfortable for both parent and baby, supports multiple positions.' },
-  { id: 'PROD012', name: 'Convertible Car Seat', sku: 'GE-CS-03', category: 'Gear', stock: 18, price: 28000, lowStockThreshold: 5, cost: 19000, minPrice: 26500, imageUrl: 'https://placehold.co/150x150.png', supplier: 'SafeRide', description: 'A car seat that converts from rear-facing to forward-facing.' },
-  { id: 'PROD013', name: 'Portable Playard with Bassinet', sku: 'GE-PP-04', category: 'Gear', stock: 15, price: 18000, lowStockThreshold: 4, cost: 12000, minPrice: 17000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'GoBabyGo', description: 'A safe space for baby to play or sleep, at home or on the go.' },
-
-  // Toys
-  { id: 'PROD014', name: 'Wooden Activity Cube', sku: 'TY-AC-01', category: 'Toys', stock: 35, price: 6500, lowStockThreshold: 10, cost: 4000, minPrice: 6200, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Playful Minds', description: 'A multi-sided activity cube to develop fine motor skills.' },
-  { id: 'PROD015', name: 'Soft Cloth Baby Books (Set of 4)', sku: 'TY-BB-02', category: 'Toys', stock: 90, price: 2300, lowStockThreshold: 30, cost: 1300, minPrice: 2100, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Little Readers', description: 'Crinkly, soft books with vibrant colors and textures.' },
-  { id: 'PROD016', name: 'Stacking Rings Tower', sku: 'TY-SR-03', category: 'Toys', stock: 120, price: 950, lowStockThreshold: 40, cost: 450, minPrice: 900, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Playful Minds', description: 'Classic toy for developing hand-eye coordination.' },
-  { id: 'PROD017', name: 'Plush Giraffe Rattle', sku: 'TY-PG-04', category: 'Toys', stock: 75, price: 1350, lowStockThreshold: 20, cost: 700, minPrice: 1250, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Cuddle Toys', description: 'A soft and cuddly giraffe with a gentle rattle sound.' },
-
-  // Diapering
-  { id: 'PROD018', name: 'Eco-Friendly Diapers (Size 3, 96ct)', sku: 'DP-ED-01', category: 'Diapering', stock: 100, price: 4200, lowStockThreshold: 25, cost: 2800, minPrice: 4000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'EcoBaby', description: 'Hypoallergenic and biodegradable diapers.' },
-  { id: 'PROD019', name: 'Sensitive Water Wipes (4-pack)', sku: 'DP-WW-02', category: 'Diapering', stock: 150, price: 1800, lowStockThreshold: 50, cost: 1100, minPrice: 1700, imageUrl: 'https://placehold.co/150x150.png', supplier: 'PureClean', description: '99.9% water wipes, perfect for sensitive skin.' },
-  { id: 'PROD020', name: 'Diaper Pail with Refills', sku: 'DP-DP-03', category: 'Diapering', stock: 22, price: 7500, lowStockThreshold: 5, cost: 5000, minPrice: 7200, imageUrl: 'https://placehold.co/150x150.png', supplier: 'OdorLock', description: 'A diaper pail that effectively seals in odors.' },
 ];
 
 export const mockSales: Sale[] = [
   { id: 'SALE001', date: '2024-07-22T10:30:00Z', customerName: 'Jane Doe', items: [{ productId: 'PROD001', name: 'Organic Cotton Onesie (3-pack)', quantity: 1, price: 3200 }], total: 3200, paymentMethod: 'Card' },
-  { id: 'SALE002', date: '2024-07-22T11:05:00Z', customerName: 'John Smith', items: [{ productId: 'PROD016', name: 'Stacking Rings Tower', quantity: 1, price: 950 }, { productId: 'PROD019', name: 'Sensitive Water Wipes (4-pack)', quantity: 1, price: 1800 }], total: 2750, paymentMethod: 'M-Pesa' },
-  { id: 'SALE003', date: '2024-07-21T15:00:00Z', customerName: 'Alice Johnson', items: [{ productId: 'PROD011', name: 'Ergonomic Baby Carrier', quantity: 1, price: 9500 }], total: 9500, paymentMethod: 'Cash' },
-  { id: 'SALE004', date: '2024-07-20T12:45:00Z', customerName: 'Bob Williams', items: [{ productId: 'PROD006', name: 'Silicone Bib with Food Catcher', quantity: 2, price: 1200 }], total: 2400, paymentMethod: 'Card' },
-  { id: 'SALE005', date: '2024-07-23T09:15:00Z', customerName: 'Charlie Brown', items: [{ productId: 'PROD010', name: '3-in-1 Baby Stroller System', quantity: 1, price: 45000 }], total: 45000, paymentMethod: 'Card' },
+  { id: 'SALE002', date: '2024-07-22T11:05:00Z', customerName: 'John Smith', items: [{ productId: 'PROD025', name: 'Baby Sneakers with Velcro', quantity: 1, price: 3000 }], total: 3000, paymentMethod: 'M-Pesa' },
+  { id: 'SALE003', date: '2024-07-21T15:00:00Z', customerName: 'Alice Johnson', items: [{ productId: 'PROD026', name: 'Diaper Bag Backpack', quantity: 1, price: 8500 }], total: 8500, paymentMethod: 'Cash' },
+  { id: 'SALE004', date: '2024-07-20T12:45:00Z', customerName: 'Bob Williams', items: [{ productId: 'PROD004', name: 'Sleep & Play Footie Pajamas', quantity: 2, price: 2800 }], total: 5600, paymentMethod: 'Card' },
+  { id: 'SALE005', date: '2024-07-23T09:15:00Z', customerName: 'Charlie Brown', items: [{ productId: 'PROD022', name: 'Muslin Swaddle Blankets (4-pack)', quantity: 1, price: 3500 }], total: 3500, paymentMethod: 'Card' },
   { id: 'SALE006', date: '2024-07-23T14:20:00Z', customerName: 'Diana Prince', items: [{ productId: 'PROD002', name: 'Fleece-Lined Baby Jacket', quantity: 1, price: 4500 }, { productId: 'PROD003', name: 'Knit Baby Booties', quantity: 2, price: 1500 }], total: 7500, paymentMethod: 'M-Pesa' },
-  { id: 'SALE007', date: '2024-07-24T16:00:00Z', customerName: 'Ethan Hunt', items: [{ productId: 'PROD018', name: 'Eco-Friendly Diapers (Size 3, 96ct)', quantity: 3, price: 4200 }], total: 12600, paymentMethod: 'Cash' },
 ];
 
 export const mockLayaways: Layaway[] = [
-  { id: 'LAY001', customerName: 'Fiona Glenanne', productName: 'Convertible Car Seat', totalAmount: 28000, amountPaid: 10000, status: 'Pending', lastPaymentDate: '2024-07-15' },
-  { id: 'LAY002', customerName: 'George Mason', productName: 'Portable Playard with Bassinet', totalAmount: 18000, amountPaid: 18000, status: 'Paid', lastPaymentDate: '2024-06-28' },
-  { id: 'LAY003', customerName: 'Hannah Abbott', productName: '3-in-1 Baby Stroller System', totalAmount: 45000, amountPaid: 25000, status: 'Pending', lastPaymentDate: '2024-07-20' },
-  { id: 'LAY004', customerName: 'Ian Malcolm', productName: 'Electric Breast Pump (Single)', totalAmount: 12500, amountPaid: 5000, status: 'Pending', lastPaymentDate: '2024-07-18' },
+  { id: 'LAY001', customerName: 'Fiona Glenanne', productName: 'Diaper Bag Backpack', totalAmount: 8500, amountPaid: 4000, status: 'Pending', lastPaymentDate: '2024-07-15' },
+  { id: 'LAY002', customerName: 'George Mason', productName: 'Plush Baby Blanket', totalAmount: 2800, amountPaid: 2800, status: 'Paid', lastPaymentDate: '2024-06-28' },
+  { id: 'LAY003', customerName: 'Hannah Abbott', productName: 'Fleece-Lined Baby Jacket', totalAmount: 4500, amountPaid: 2000, status: 'Pending', lastPaymentDate: '2024-07-20' },
+  { id: 'LAY004', customerName: 'Ian Malcolm', productName: 'Soft Sole Leather Baby Shoes', totalAmount: 2200, amountPaid: 1000, status: 'Pending', lastPaymentDate: '2024-07-18' },
 ];
 
 export const mockCustomers: Customer[] = [
@@ -98,12 +74,9 @@ export const mockAuditLogs: AuditLog[] = [
 
 export const salesDataForAI = JSON.stringify([
   {"date": "2024-07-01", "productId": "PROD001", "quantity": 5},
-  {"date": "2024-07-03", "productId": "PROD008", "quantity": 10},
-  {"date": "2024-07-05", "productId": "PROD016", "quantity": 15},
+  {"date": "2024-07-05", "productId": "PROD004", "quantity": 15},
   {"date": "2024-07-10", "productId": "PROD001", "quantity": 3},
-  {"date": "2024-07-15", "productId": "PROD019", "quantity": 20},
   {"date": "2024-07-20", "productId": "PROD003", "quantity": 2},
-  {"date": "2024-07-21", "productId": "PROD011", "quantity": 1},
 ], null, 2);
 
 export const productDetailsForAI = JSON.stringify(mockProducts.map(p => ({
