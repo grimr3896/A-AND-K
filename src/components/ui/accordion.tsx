@@ -4,8 +4,6 @@
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDown } from "lucide-react"
-import { Slot } from "@radix-ui/react-slot"
-
 
 import { cn } from "@/lib/utils"
 
@@ -13,17 +11,14 @@ const Accordion = AccordionPrimitive.Root
 
 const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> & { asChild?: boolean }
->(({ className, asChild, ...props }, ref) => {
-  const Comp = asChild ? Slot : AccordionPrimitive.Item;
-  return (
-    <Comp
-      ref={ref}
-      className={cn("border-b-0", className)}
-      {...props}
-    />
-  )
-})
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
+>(({ className, ...props }, ref) => (
+  <AccordionPrimitive.Item
+    ref={ref}
+    className={cn("border-b-0", className)}
+    {...props}
+  />
+))
 AccordionItem.displayName = "AccordionItem"
 
 const AccordionTrigger = React.forwardRef<
