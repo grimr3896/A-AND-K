@@ -64,6 +64,13 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+  }
+
+  .dark body {
+    background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+    background-color: #1a202c;
+    background-blend-mode: overlay;
   }
 }
