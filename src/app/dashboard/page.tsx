@@ -21,9 +21,12 @@ import { mockSales } from '@/lib/mock-data';
 import { SalesTrendChart } from './_components/sales-trend-chart';
 import { TopSellingProductsChart } from './_components/top-selling-products-chart';
 import { SalesByCategoryChart } from './_components/sales-by-category-chart';
+import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format } from 'date-fns';
+
+type DateRange = 'today' | 'this-week' | 'this-month' | 'this-quarter' | 'this-year';
 
 export default function Dashboard() {
-  const [dateRange, setDateRange] = React.useState('this-month');
+  const [dateRange, setDateRange] = React.useState<DateRange>('this-month');
 
   // --- KPI Calculations (based on mock data) ---
   const todaysSales = mockSales
@@ -37,6 +40,38 @@ export default function Dashboard() {
   const transactionsToday = mockSales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length;
   const averageTransactionValue = mockSales.length > 0 ? totalRevenue / mockSales.length : 0;
 
+  const filteredSalesData = React.useMemo(() => {
+    const now = new Date();
+    let interval;
+    switch (dateRange) {
+        case 'this-week':
+            interval = { start: startOfWeek(now), end: endOfWeek(now) };
+            break;
+        case 'this-month':
+            interval = { start: startOfMonth(now), end: endOfMonth(now) };
+            break;
+        case 'this-year':
+             interval = { start: startOfYear(now), end: endOfYear(now) };
+             break;
+        default:
+             interval = { start: startOfMonth(now), end: endOfMonth(now) };
+    }
+    return mockSales.filter(sale => isWithinInterval(new Date(sale.date), interval));
+  }, [dateRange]);
+
+  const salesTrendChartData = React.useMemo(() => {
+     const dataMap = new Map<string, number>();
+     let dateFormat = "MMM d";
+     if (dateRange === 'this-year') dateFormat = "MMM";
+
+     filteredSalesData.forEach(sale => {
+         const key = format(new Date(sale.date), dateFormat);
+         dataMap.set(key, (dataMap.get(key) || 0) + sale.total);
+     });
+
+     return Array.from(dataMap.entries()).map(([date, sales]) => ({ date, sales }));
+  }, [filteredSalesData, dateRange]);
+
 
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8">
@@ -44,7 +79,7 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <h1 className="text-2xl font-bold">Executive Dashboard</h1>
         <div className="flex items-center gap-2 ml-auto">
-           <Select value={dateRange} onValueChange={setDateRange}>
+           <Select value={dateRange} onValueChange={(value) => setDateRange(value as DateRange)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select date range" />
             </SelectTrigger>
@@ -52,7 +87,7 @@ export default function Dashboard() {
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="this-week">This Week</SelectItem>
               <SelectItem value="this-month">This Month</SelectItem>
-              <SelectItem value="this-quarter">This Quarter</SelectItem>
+              <SelectItem value="this-quarter" disabled>This Quarter</SelectItem>
               <SelectItem value="this-year">This Year</SelectItem>
             </SelectContent>
           </Select>
@@ -111,10 +146,16 @@ export default function Dashboard() {
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-5">
         <Card className="xl:col-span-3">
           <CardHeader>
-            <CardTitle>Monthly Sales Trend</CardTitle>
+            <CardTitle>
+                {
+                    dateRange === 'this-week' ? 'Weekly Sales Trend' :
+                    dateRange === 'this-month' ? 'Monthly Sales Trend' :
+                    dateRange === 'this-year' ? 'Yearly Sales Trend' : 'Sales Trend'
+                }
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <SalesTrendChart />
+            <SalesTrendChart data={salesTrendChartData} dateKey="date" />
           </CardContent>
         </Card>
         <Card className="xl:col-span-2">

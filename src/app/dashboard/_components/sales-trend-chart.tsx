@@ -8,15 +8,15 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 
+type SalesDataPoint = {
+  date: string;
+  sales: number;
+};
 
-const salesTrendData = [
-  { month: 'January', sales: 186000 },
-  { month: 'February', sales: 305000 },
-  { month: 'March', sales: 237000 },
-  { month: 'April', sales: 273000 },
-  { month: 'May', sales: 209000 },
-  { month: 'June', sales: 314000 },
-];
+type SalesTrendChartProps = {
+    data: SalesDataPoint[];
+    dateKey: "date" | "month" | "year";
+}
 
 const chartConfig = {
   sales: {
@@ -25,24 +25,24 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function SalesTrendChart() {
+export function SalesTrendChart({ data, dateKey }: SalesTrendChartProps) {
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
       <LineChart
         accessibilityLayer
-        data={salesTrendData}
+        data={data}
         margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
       >
         <CartesianGrid vertical={false} />
         <XAxis
-          dataKey="month"
+          dataKey={dateKey}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
         />
         <Tooltip
           content={<ChartTooltipContent
-             formatter={(value) => `KSh ${value.toLocaleString()}`}
+             formatter={(value) => `KSh ${Number(value).toLocaleString()}`}
           />}
         />
         <Line
