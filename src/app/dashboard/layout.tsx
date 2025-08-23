@@ -96,15 +96,15 @@ export default function DashboardLayout({
                   <span className="font-headline">A & K babyshop</span>
                 </Link>
               </div>
-              <nav className="flex-1 overflow-auto px-2 text-sm lg:px-4">
+              <nav className="flex-1 overflow-auto px-2 text-base lg:px-4 space-y-1">
                 {accessibleLinks.map(({ href, label, icon: Icon, isLocked }) => (
                   <Link
                     key={label}
                     href={href}
-                    className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:text-primary font-semibold"
+                    className="flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-foreground transition-all hover:text-primary font-semibold"
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4" />
+                    <div className="flex items-center gap-4">
+                      <Icon className="h-5 w-5" />
                       {label}
                     </div>
                     {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
@@ -135,10 +135,10 @@ export default function DashboardLayout({
                       <Link
                         key={label}
                         href={href}
-                        className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold"
+                        className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-foreground hover:text-foreground font-semibold"
                       >
                          <div className="flex items-center gap-4">
-                            <Icon className="h-5 w-5" />
+                            <Icon className="h-6 w-6" />
                             {label}
                         </div>
                         {isLocked && <Lock className="h-5 w-5 text-muted-foreground" />}
@@ -146,7 +146,7 @@ export default function DashboardLayout({
                     ))}
                   </nav>
                    <div className="mt-auto border-t pt-4">
-                      <button onClick={logout} className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold w-full">
+                      <button onClick={logout} className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-3 text-foreground hover:text-foreground font-semibold w-full">
                           <LogOut className="h-5 w-5" />
                           Logout
                       </button>
