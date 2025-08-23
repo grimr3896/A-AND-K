@@ -14,7 +14,7 @@ export default function LoginPage() {
         </p>
         <LoginForm />
         <p className="px-8 text-center text-sm text-muted-foreground">
-          Enter a username (e.g. A&Kbabyshop, manager, or staff) and the password. Default password is: ALEXA
+          Enter a username (e.g. A&Kbabyshop, manager, or staff) and the password.
         </p>
       </div>
     </main>
