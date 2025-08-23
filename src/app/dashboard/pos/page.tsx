@@ -68,7 +68,7 @@ export default function POSPage() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const receiptRef = React.useRef<HTMLDivElement>(null);
 
-    const addProductToCart = (product: Product) => {
+    const addProductToCart = React.useCallback((product: Product) => {
         const existingCartItemIndex = cart.findIndex(item => item.id === product.id);
         
         if (existingCartItemIndex > -1) {
@@ -106,7 +106,8 @@ export default function POSPage() {
                 agreedPrice: product.price,
             }]);
         }
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cart, agreementTable, toast]);
     
     React.useEffect(() => {
         const priceErrors = agreementTable.some(item => item.agreedPrice < item.minPrice);
@@ -120,7 +121,7 @@ export default function POSPage() {
     }, [agreementTable, toast]);
 
 
-    const handlePriceChange = (productId: string, newPriceStr: string) => {
+    const handlePriceChange = React.useCallback((productId: string, newPriceStr: string) => {
         let newPrice = parseFloat(newPriceStr);
         
         const agreementItem = agreementTable.find(a => a.id === productId);
@@ -141,9 +142,9 @@ export default function POSPage() {
                 item.id === productId ? { ...item, agreedPrice: newPrice } : item
             )
         );
-    };
+    }, [agreementTable]);
     
-     const validatePrice = (e: React.FocusEvent<HTMLInputElement>) => {
+     const validatePrice = React.useCallback((e: React.FocusEvent<HTMLInputElement>) => {
         const newPrice = parseFloat(e.target.value);
         const productId = e.target.dataset.id!;
         const agreementItem = agreementTable.find(a => a.id === productId);
@@ -156,19 +157,25 @@ export default function POSPage() {
             });
              handlePriceChange(productId, agreementItem.minPrice.toString());
         }
-    };
+    }, [agreementTable, toast, handlePriceChange]);
 
 
-    const updateQuantity = (productId: string, delta: number) => {
+    const updateQuantity = React.useCallback((productId: string, delta: number) => {
         setCart(prevCart => {
             const itemIndex = prevCart.findIndex(item => item.id === productId);
             if (itemIndex === -1) return prevCart;
 
             const item = prevCart[itemIndex];
             const newQuantity = item.quantity + delta;
+            
+            const deleteItemFromCart = (id: string, current: CartItem[]) => {
+                const newCart = current.filter(i => i.id !== id);
+                setAgreementTable(a => a.filter(a => a.id !== id));
+                return newCart;
+            }
 
             if (newQuantity <= 0) {
-                return deleteItem(productId, prevCart);
+                return deleteItemFromCart(productId, prevCart);
             }
             if (newQuantity > item.stock) {
                 toast({ variant: 'destructive', title: 'Out of Stock', description: `Only ${item.stock} of ${item.name} available.` });
@@ -179,14 +186,12 @@ export default function POSPage() {
             newCart[itemIndex] = { ...item, quantity: newQuantity };
             return newCart;
         });
-    };
+    }, [toast]);
 
-    const deleteItem = (productId: string, currentCart: CartItem[] = cart) => {
-        const newCart = currentCart.filter(i => i.id !== productId);
-        setAgreementTable(agreementTable.filter(a => a.id !== productId));
-        setCart(newCart);
-        return newCart;
-    }
+    const deleteItem = React.useCallback((productId: string) => {
+        setCart(currentCart => currentCart.filter(i => i.id !== productId));
+        setAgreementTable(currentAgreementTable => currentAgreementTable.filter(a => a.id !== productId));
+    }, []);
     
     const subtotal = React.useMemo(() => cart.reduce((acc, item) => acc + item.agreedPrice * item.quantity, 0), [cart]);
     const taxRate = 0.08;
@@ -194,12 +199,12 @@ export default function POSPage() {
     const total = subtotal + tax;
     const changeDue = amountReceived - total;
 
-    const resetSale = () => {
+    const resetSale = React.useCallback(() => {
         setCart([]);
         setAgreementTable([]);
         setAmountReceived(0);
         setPaymentMethod('Cash');
-    }
+    }, []);
     
     const handlePrintReceipt = () => {
         const printContent = receiptRef.current?.innerHTML;
@@ -233,7 +238,7 @@ export default function POSPage() {
     };
 
 
-    const handleFinalCheckout = () => {
+    const handleFinalCheckout = React.useCallback(() => {
         if(cart.length === 0) {
             toast({ variant: 'destructive', title: 'Cart Empty', description: 'Please add products to the cart.' });
             return;
@@ -263,9 +268,9 @@ export default function POSPage() {
         console.log("Sale Saved:", saleData);
 
         resetSale();
-    };
+    }, [cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue, processCheckout, toast, resetSale]);
 
-    const handleSuspend = () => {
+    const handleSuspend = React.useCallback(() => {
         if(cart.length === 0) {
             toast({ variant: 'destructive', title: 'Cart Empty', description: 'Cannot suspend an empty cart.' });
             return;
@@ -281,9 +286,9 @@ export default function POSPage() {
         setPendingTransactions(prev => [...prev, newPendingTx]);
         toast({ title: 'Order Suspended', description: `Order with ${newPendingTx.itemCount} items suspended.` });
         resetSale();
-    }
+    }, [cart, total, toast, resetSale]);
 
-    const handleResume = (txId: number) => {
+    const handleResume = React.useCallback((txId: number) => {
         if (cart.length > 0) {
             toast({ variant: 'destructive', title: 'Active Cart', description: 'Please clear or complete the current sale before resuming another.' });
             return;
@@ -304,11 +309,11 @@ export default function POSPage() {
             setPendingTransactions(prev => prev.filter(tx => tx.id !== txId));
             toast({ title: 'Order Resumed', description: 'The suspended order has been loaded into the cart.' });
         }
-    }
+    }, [cart, pendingTransactions, toast]);
     
-    const filteredProducts = products.filter(product => 
+    const filteredProducts = React.useMemo(() => products.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    ), [products, searchTerm]);
 
 
     return (
