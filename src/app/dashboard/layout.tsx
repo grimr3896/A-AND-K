@@ -72,7 +72,7 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-        <div className="flex h-screen items-center justify-center">
+        <div className="flex h-screen items-center justify-center bg-transparent">
             <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     );
@@ -89,7 +89,7 @@ export default function DashboardLayout({
   return (
     <BusinessInfoProvider>
       <ProductsProvider>
-        <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <div className="grid min-h-screen w-full bg-card/80 md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
           <div className="hidden border-r bg-muted/40 md:block">
             <div className="flex h-full max-h-screen flex-col gap-2">
               <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -185,7 +185,7 @@ export default function DashboardLayout({
                 </DropdownMenuContent>
               </DropdownMenu>
             </header>
-            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-transparent">
               {isProtectedRoute ? (
                 <ProtectedRoute>
                   {children}
