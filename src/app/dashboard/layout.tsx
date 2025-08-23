@@ -59,7 +59,7 @@ export default function DashboardLayout({
     { href: '/dashboard/layaways', label: 'Layaways', icon: Coins, roles: ['Admin', 'Manager', 'Staff'] },
     // Protected routes below
     { href: '/dashboard/stock-requirements', label: 'Stock Requirements', icon: Warehouse, roles: ['Admin', 'Manager'] },
-    { href: '/dashboard/sales-history', label: 'Sales History', icon: History, roles: ['Admin', 'Manager'] },
+    { href: '/dashboard/sales-history', label: 'Sales History', icon: History, roles: ['Admin', 'Manager'], isLocked: true },
     { href: '/dashboard/reports', label: 'Reports', icon: AreaChart, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu, roles: ['Admin'] },

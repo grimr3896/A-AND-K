@@ -21,8 +21,9 @@ import { mockSales } from '@/lib/mock-data';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { format } from 'date-fns';
 import React from 'react';
+import { PasswordProtectedRoute } from '@/components/auth/password-protected-route';
 
-export default function SalesHistoryPage() {
+function SalesHistoryPageContent() {
   return (
     <Card>
       <CardHeader>
@@ -41,9 +42,8 @@ export default function SalesHistoryPage() {
                 <TableHead className="w-[100px] text-center">Details</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
               {mockSales.map((sale) => (
-                <React.Fragment key={sale.id}>
+                <TableBody key={sale.id}>
                   <TableRow>
                     <TableCell className="font-mono">{sale.id}</TableCell>
                     <TableCell>{format(new Date(sale.date), 'PPP')}</TableCell>
@@ -56,7 +56,7 @@ export default function SalesHistoryPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">Ksh {sale.total.toFixed(2)}</TableCell>
-                    <TableCell className="p-0">
+                    <TableCell className="p-0 text-center">
                        <AccordionItem value={sale.id} className="border-b-0">
                          <AccordionTrigger>Details</AccordionTrigger>
                        </AccordionItem>
@@ -93,12 +93,19 @@ export default function SalesHistoryPage() {
                        </AccordionItem>
                     </TableCell>
                   </TableRow>
-                </React.Fragment>
+                </TableBody>
               ))}
-            </TableBody>
           </Table>
         </Accordion>
       </CardContent>
     </Card>
   );
+}
+
+export default function SalesHistoryPage() {
+    return (
+        <PasswordProtectedRoute pageTitle="Sales History">
+            <SalesHistoryPageContent />
+        </PasswordProtectedRoute>
+    )
 }
