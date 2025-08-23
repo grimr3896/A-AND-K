@@ -90,6 +90,7 @@ export default function POSPage() {
                     category: product.category,
                     price: product.price,
                     minPrice: product.minPrice,
+                    imageUrl: product.imageUrl
                 }]);
             } else {
                  toast({ variant: 'destructive', title: 'Out of Stock', description: `${product.name} is out of stock.` });

@@ -24,6 +24,7 @@ export type CartItem = {
   stock: number;
   category: string;
   minPrice: number;
+  imageUrl?: string;
 };
 
 export type Sale = {

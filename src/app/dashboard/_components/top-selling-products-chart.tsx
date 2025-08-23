@@ -9,12 +9,12 @@ import {
 
 // Mock data simulating top selling products by revenue
 const topProductsData = [
-  { name: 'Classic Blue Jeans', revenue: 79990 },
-  { name: 'Floral Tea Dress', revenue: 59990 },
-  { name: 'Leather Ankle Boots', revenue: 48000 },
-  { name: 'Summer Maxi Dress', revenue: 32500 },
-  { name: 'Premium Bibs', revenue: 25000 },
-  { name: 'Baby Carrier X', revenue: 22000 },
+  { name: 'Organic Cotton Onesie', revenue: 79990 },
+  { name: 'Diaper Bag Backpack', revenue: 59990 },
+  { name: 'Fleece-Lined Baby Jacket', revenue: 48000 },
+  { name: 'Muslin Swaddle Blankets', revenue: 32500 },
+  { name: 'Soft Sole Leather Shoes', revenue: 25000 },
+  { name: 'Ergonomic Baby Carrier', revenue: 22000 },
 ];
 
 export function TopSellingProductsChart() {

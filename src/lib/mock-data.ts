@@ -16,18 +16,33 @@ export const getApiKey = () => "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
 
 
 export const mockProducts: Product[] = [
-  // Baby Clothing
-  { id: 'PROD001', name: 'Organic Cotton Onesie (3-pack)', sku: 'BC-OC-01', category: 'Baby Clothing', stock: 50, price: 3200, lowStockThreshold: 15, cost: 1800, minPrice: 3000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Baby Threads Co.', description: 'Soft, breathable 100% organic cotton onesies.' },
-  { id: 'PROD002', name: 'Fleece-Lined Baby Jacket', sku: 'BC-FJ-02', category: 'Baby Clothing', stock: 25, price: 4500, lowStockThreshold: 10, cost: 2500, minPrice: 4200, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Cozy Kids', description: 'A warm and cozy fleece-lined jacket for chilly days.' },
-  { id: 'PROD003', name: 'Knit Baby Booties', sku: 'BC-KB-03', category: 'Baby Clothing', stock: 60, price: 1500, lowStockThreshold: 20, cost: 800, minPrice: 1400, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Baby Threads Co.', description: 'Hand-knitted baby booties to keep little feet warm.' },
-  { id: 'PROD004', name: 'Sleep & Play Footie Pajamas', sku: 'BC-SP-04', category: 'Baby Clothing', stock: 40, price: 2800, lowStockThreshold: 10, cost: 1500, minPrice: 2600, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Dreamy Baby', description: 'Comfortable one-piece pajamas for sleep and play.' },
-  { id: 'PROD005', name: 'Denim Baby Overalls', sku: 'BC-DO-05', category: 'Baby Clothing', stock: 18, price: 3800, lowStockThreshold: 5, cost: 2200, minPrice: 3500, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Cozy Kids', description: 'Stylish and durable denim overalls for toddlers.' },
+  // Clothes
+  { id: 'PROD001', name: 'Organic Cotton Onesie (3-pack)', sku: 'CL-OC-01', category: 'Clothes', stock: 50, price: 3200, lowStockThreshold: 15, cost: 1800, minPrice: 3000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Baby Threads Co.', description: 'Soft, breathable 100% organic cotton onesies.' },
+  { id: 'PROD002', name: 'Fleece-Lined Baby Jacket', sku: 'CL-FJ-02', category: 'Clothes', stock: 25, price: 4500, lowStockThreshold: 10, cost: 2500, minPrice: 4200, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Cozy Kids', description: 'A warm and cozy fleece-lined jacket for chilly days.' },
+  { id: 'PROD004', name: 'Sleep & Play Footie Pajamas', sku: 'CL-SP-04', category: 'Clothes', stock: 40, price: 2800, lowStockThreshold: 10, cost: 1500, minPrice: 2600, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Dreamy Baby', description: 'Comfortable one-piece pajamas for sleep and play.' },
+  { id: 'PROD005', name: 'Denim Baby Overalls', sku: 'CL-DO-05', category: 'Clothes', stock: 18, price: 3800, lowStockThreshold: 5, cost: 2200, minPrice: 3500, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Cozy Kids', description: 'Stylish and durable denim overalls for toddlers.' },
+  
+  // Accessories
+  { id: 'PROD003', name: 'Knit Baby Booties', sku: 'AC-KB-03', category: 'Accessories', stock: 60, price: 1500, lowStockThreshold: 20, cost: 800, minPrice: 1400, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Baby Threads Co.', description: 'Hand-knitted baby booties to keep little feet warm.' },
+  { id: 'PROD009', name: 'Nursing Cover Scarf', sku: 'AC-NC-04', category: 'Accessories', stock: 30, price: 2500, lowStockThreshold: 10, cost: 1400, minPrice: 2300, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Mommy Style', description: 'A stylish and discreet nursing cover that doubles as a scarf.' },
+  { id: 'PROD021', name: 'Sun Hat with UV Protection', sku: 'AC-SH-05', category: 'Accessories', stock: 50, price: 1800, lowStockThreshold: 15, cost: 900, minPrice: 1600, imageUrl: 'https://placehold.co/150x150.png', supplier: 'SunSafe Kids', description: 'A wide-brimmed sun hat with UPF 50+ protection.' },
+  
+  // Blankets
+  { id: 'PROD022', name: 'Muslin Swaddle Blankets (4-pack)', sku: 'BL-MS-01', category: 'Blankets', stock: 80, price: 3500, lowStockThreshold: 20, cost: 2000, minPrice: 3200, imageUrl: 'https://placehold.co/150x150.png', supplier: 'SnuggleBug', description: 'Lightweight and breathable muslin swaddle blankets.' },
+  { id: 'PROD023', name: 'Plush Baby Blanket', sku: 'BL-PB-02', category: 'Blankets', stock: 40, price: 2800, lowStockThreshold: 10, cost: 1500, minPrice: 2600, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Cuddle Toys', description: 'An ultra-soft plush blanket for cuddling and naps.' },
+  
+  // Shoes
+  { id: 'PROD024', name: 'Soft Sole Leather Baby Shoes', sku: 'SH-SL-01', category: 'Shoes', stock: 55, price: 2200, lowStockThreshold: 15, cost: 1200, minPrice: 2000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Tiny Toes', description: 'Flexible soft sole shoes perfect for first walkers.' },
+  { id: 'PROD025', name: 'Baby Sneakers with Velcro', sku: 'SH-SV-02', category: 'Shoes', stock: 30, price: 3000, lowStockThreshold: 10, cost: 1700, minPrice: 2800, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Kiddy Kicks', description: 'Stylish and easy-to-wear sneakers for toddlers.' },
+  
+  // Bags
+  { id: 'PROD026', name: 'Diaper Bag Backpack', sku: 'BG-DB-01', category: 'Bags', stock: 25, price: 8500, lowStockThreshold: 5, cost: 5000, minPrice: 8000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'MomGo', description: 'A spacious and stylish diaper bag with multiple compartments.' },
+  { id: 'PROD027', name: 'Toddler Character Backpack', sku: 'BG-TB-02', category: 'Bags', stock: 40, price: 2500, lowStockThreshold: 10, cost: 1400, minPrice: 2300, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Playful Packs', description: 'A cute and fun backpack for your toddler\'s essentials.' },
 
   // Nursing & Feeding
   { id: 'PROD006', name: 'Silicone Bib with Food Catcher', sku: 'NF-SB-01', category: 'Nursing', stock: 70, price: 1200, lowStockThreshold: 25, cost: 600, minPrice: 1100, imageUrl: 'https://placehold.co/150x150.png', supplier: 'FeedEasy', description: 'Easy to clean, BPA-free silicone bib with a pocket.' },
   { id: 'PROD007', name: 'Electric Breast Pump (Single)', sku: 'NF-BP-02', category: 'Nursing', stock: 15, price: 12500, lowStockThreshold: 5, cost: 8000, minPrice: 12000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'MomTech', description: 'Efficient and quiet single electric breast pump.' },
   { id: 'PROD008', name: 'Anti-Colic Baby Bottles (2-pack)', sku: 'NF-BB-03', category: 'Nursing', stock: 80, price: 2200, lowStockThreshold: 20, cost: 1200, minPrice: 2000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'FeedEasy', description: 'Designed to reduce colic, gas, and reflux.' },
-  { id: 'PROD009', name: 'Nursing Cover Scarf', sku: 'NF-NC-04', category: 'Nursing', stock: 30, price: 2500, lowStockThreshold: 10, cost: 1400, minPrice: 2300, imageUrl: 'https://placehold.co/150x150.png', supplier: 'Mommy Style', description: 'A stylish and discreet nursing cover that doubles as a scarf.' },
 
   // Gear
   { id: 'PROD010', name: '3-in-1 Baby Stroller System', sku: 'GE-ST-01', category: 'Gear', stock: 12, price: 45000, lowStockThreshold: 3, cost: 30000, minPrice: 42000, imageUrl: 'https://placehold.co/150x150.png', supplier: 'GoBabyGo', description: 'A versatile stroller system that grows with your baby.' },

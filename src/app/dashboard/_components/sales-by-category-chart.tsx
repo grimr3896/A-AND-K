@@ -8,23 +8,44 @@ import {
 } from '@/components/ui/chart';
 
 const salesByCategoryData = [
-  { category: 'Baby Clothing', sales: 45, fill: 'var(--color-clothing)' },
-  { category: 'Nursing', sales: 25, fill: 'var(--color-nursing)' },
-  { category: 'Gear', sales: 15, fill: 'var(--color-gear)' },
-  { category: 'Toys', sales: 15, fill: 'var(--color-toys)' },
+  { category: 'Clothes', sales: 35, fill: 'var(--color-clothes)' },
+  { category: 'Accessories', sales: 15, fill: 'var(--color-accessories)' },
+  { category: 'Blankets', sales: 10, fill: 'var(--color-blankets)' },
+  { category: 'Shoes', sales: 8, fill: 'var(--color-shoes)' },
+  { category: 'Bags', sales: 7, fill: 'var(--color-bags)' },
+  { category: 'Nursing', sales: 10, fill: 'var(--color-nursing)' },
+  { category: 'Gear', sales: 5, fill: 'var(--color-gear)' },
+  { category: 'Toys', sales: 5, fill: 'var(--color-toys)' },
+  { category: 'Diapering', sales: 5, fill: 'var(--color-diapering)' },
 ];
 
 const chartConfig = {
   sales: {
     label: 'Sales',
   },
-  clothing: {
-    label: 'Baby Clothing',
+  clothes: {
+    label: 'Clothes',
     color: 'hsl(var(--chart-1))',
+  },
+  accessories: {
+    label: 'Accessories',
+    color: 'hsl(var(--chart-2))',
+  },
+  blankets: {
+    label: 'Blankets',
+    color: 'hsl(var(--chart-3))',
+  },
+  shoes: {
+    label: 'Shoes',
+    color: 'hsl(var(--chart-4))',
+  },
+  bags: {
+    label: 'Bags',
+    color: 'hsl(var(--chart-5))',
   },
   nursing: {
     label: 'Nursing',
-    color: 'hsl(var(--chart-2))',
+    color: 'hsl(var(--chart-2))', // Re-using colors for simplicity
   },
   gear: {
     label: 'Gear',
@@ -33,6 +54,10 @@ const chartConfig = {
   toys: {
     label: 'Toys',
     color: 'hsl(var(--chart-4))',
+  },
+  diapering: {
+    label: 'Diapering',
+    color: 'hsl(var(--chart-5))',
   },
 };
 
