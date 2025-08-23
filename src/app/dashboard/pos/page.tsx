@@ -23,10 +23,11 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { Shirt, Footprints, ShoppingBasket, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer, ToyBrick, HandPlatter } from 'lucide-react';
+import { Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer, ShoppingCart } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Receipt } from './_components/receipt';
 import { useProducts } from '@/contexts/products-context';
+import Image from 'next/image';
 
 type AgreementItem = {
     id:string;
@@ -66,18 +67,6 @@ export default function POSPage() {
     const [pendingTransactions, setPendingTransactions] = React.useState<PendingTransaction[]>([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const receiptRef = React.useRef<HTMLDivElement>(null);
-
-
-    const productIcons: { [key: string]: React.ReactNode } = {
-        'Dresses': <Shirt />,
-        'Trousers': <Shirt />,
-        'Shirts': <Shirt />,
-        'Shoes': <Footprints />,
-        'Accessories': <ShoppingBasket />,
-        'Toys': <ToyBrick />,
-        'Nursing': <HandPlatter />,
-        'Default': <ShoppingCart />
-    };
 
     const addProductToCart = (product: Product) => {
         const existingCartItemIndex = cart.findIndex(item => item.id === product.id);
@@ -340,11 +329,16 @@ export default function POSPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredProducts.map((product) => (
-                            <button key={product.id} onClick={() => addProductToCart(product)} className="flex flex-col items-center justify-center p-3 border rounded-lg hover:bg-muted transition-colors text-center">
-                                 <div className="text-primary mb-2">
-                                    {productIcons[product.category] || productIcons['Default']}
-                                </div>
-                                <p className="text-sm font-medium">{product.name}</p>
+                            <button key={product.id} onClick={() => addProductToCart(product)} className="flex flex-col items-center justify-center p-3 border rounded-lg hover:bg-muted transition-colors text-center aspect-square">
+                                <Image 
+                                    src={product.imageUrl || `https://placehold.co/100x100.png`}
+                                    alt={product.name}
+                                    width={100}
+                                    height={100}
+                                    className="object-cover rounded-md aspect-square mb-2"
+                                    data-ai-hint="product image"
+                                />
+                                <p className="text-sm font-medium leading-tight line-clamp-2">{product.name}</p>
                             </button>
                         ))}
                     </CardContent>
