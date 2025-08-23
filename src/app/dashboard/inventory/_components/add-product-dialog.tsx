@@ -32,7 +32,7 @@ import { useProducts } from '@/contexts/products-context';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
-  sku: z.string().min(1, 'SKU is required'),
+  sku: z.string().optional(),
   category: z.string().min(1, 'Category is required'),
   stock: z.coerce.number().int().min(0, 'Stock cannot be negative'),
   price: z.coerce.number().min(0, 'Price cannot be negative'),
@@ -78,6 +78,25 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
     },
   });
 
+  const generateSku = (category: string, name: string): string => {
+    if (!category || !name) return '';
+    const categoryPrefix = category.substring(0, 3).toUpperCase();
+    const namePrefix = name.split(' ').map(word => word.substring(0,1)).join('').toUpperCase().substring(0,3);
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `${categoryPrefix}-${namePrefix}-${randomNum}`;
+  };
+
+  const nameValue = form.watch('name');
+  const categoryValue = form.watch('category');
+
+  React.useEffect(() => {
+    if (!productToEdit && nameValue && categoryValue) {
+      const newSku = generateSku(categoryValue, nameValue);
+      form.setValue('sku', newSku);
+    }
+  }, [nameValue, categoryValue, productToEdit, form]);
+
+
   React.useEffect(() => {
     if (productToEdit) {
       form.reset(productToEdit);
@@ -114,8 +133,9 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
   };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const productData = productToEdit ? { ...productToEdit, ...values } : values;
-    onProductSubmit(productData);
+    const finalValues = { ...values, sku: values.sku || generateSku(values.category, values.name) };
+    const productData = productToEdit ? { ...productToEdit, ...finalValues } : finalValues;
+    onProductSubmit(productData as Omit<Product, 'id'> | Product);
     const action = productToEdit ? 'updated' : 'added';
     toast({ title: 'Success', description: `Product "${values.name}" has been ${action}.` });
   }
@@ -193,7 +213,7 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
                     <FormItem>
                       <FormLabel>SKU</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., D-SM-01" {...field} />
+                        <Input placeholder="Auto-generated" {...field} disabled={!productToEdit} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -304,3 +324,5 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
     </Dialog>
   );
 }
+
+    
