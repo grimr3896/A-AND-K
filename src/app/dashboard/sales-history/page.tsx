@@ -44,11 +44,10 @@ export default function SalesHistoryPage() {
           <Accordion type="single" collapsible asChild>
             <TableBody>
               {mockSales.map((sale) => (
-                <AccordionItem value={sale.id} key={sale.id} asChild>
-                  <>
+                <AccordionItem value={sale.id} key={sale.id}>
                     <TableRow>
                       <TableCell>
-                        <AccordionTrigger />
+                        <AccordionTrigger></AccordionTrigger>
                       </TableCell>
                       <TableCell className="font-mono">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
@@ -72,7 +71,6 @@ export default function SalesHistoryPage() {
                               <TableHeader>
                                 <TableRow>
                                   <TableHead>Product Name</TableHead>
-
                                   <TableHead>Quantity</TableHead>
                                   <TableHead className="text-right">Price Sold At</TableHead>
                                   <TableHead className="text-right">Subtotal</TableHead>
@@ -93,7 +91,6 @@ export default function SalesHistoryPage() {
                         </AccordionContent>
                       </TableCell>
                     </TableRow>
-                  </>
                 </AccordionItem>
               ))}
             </TableBody>
