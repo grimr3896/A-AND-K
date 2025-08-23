@@ -1,8 +1,7 @@
 
 import type { Product, Sale, Layaway, Customer, AuditLog, User } from './types';
 
-// In a real app, this would be managed securely in a database.
-// For this prototype, we simulate a single source of truth for the password.
+// This is now a default/fallback password. The actual password will be managed in context/localStorage.
 let currentAdminPassword = "ALEXA";
 
 export const getAdminPassword = () => currentAdminPassword;
@@ -11,6 +10,9 @@ export const setAdminPassword = (newPassword: string) => {
   currentAdminPassword = newPassword;
   return true;
 };
+
+// Default API key
+export const getApiKey = () => "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
 
 
 export const mockProducts: Product[] = [

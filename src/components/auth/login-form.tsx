@@ -44,9 +44,12 @@ export function LoginForm() {
     // Simulate API call
     setTimeout(() => {
       const user = mockUsers.find(u => u.username.toLowerCase() === values.username.toLowerCase());
-      const adminPassword = getAdminPassword();
+      
+      // In a real app, password would come from a secure source. Here we simulate it.
+      // The `getAdminPassword` is now a placeholder as the real password management is in the context.
+      const correctPassword = localStorage.getItem('adminPassword') || getAdminPassword();
 
-      if (user && values.password === adminPassword) {
+      if (user && values.password === correctPassword) {
         // In a real app, you'd use a more secure session management system.
         localStorage.setItem('loggedInUser', JSON.stringify(user));
         toast({

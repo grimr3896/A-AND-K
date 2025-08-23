@@ -11,18 +11,15 @@ export function useAuth() {
   const router = useRouter();
 
   React.useEffect(() => {
-    try {
+    // This effect should only run on the client-side
+    if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('loggedInUser');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       } else {
-        // Redirect to login if no user is found in localStorage
         router.push('/');
       }
-    } catch (error) {
-        // This can happen if running on the server, just ignore.
-    } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }, [router]);
 
@@ -30,6 +27,14 @@ export function useAuth() {
     if (isLoading || !user) return false;
     return roles.includes(user.role);
   };
+  
+  const hasValidApiKey = () => {
+    if (typeof window !== 'undefined') {
+        const storedApiKey = localStorage.getItem('apiKey');
+        return storedApiKey && storedApiKey.length > 0;
+    }
+    return false;
+  }
 
   const logout = () => {
     localStorage.removeItem('loggedInUser');
@@ -37,5 +42,5 @@ export function useAuth() {
     router.push('/');
   };
 
-  return { user, hasRole, logout, isLoading };
+  return { user, hasRole, logout, isLoading, hasValidApiKey };
 }

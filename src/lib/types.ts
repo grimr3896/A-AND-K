@@ -75,6 +75,9 @@ export type User = {
     role: UserRole;
 }
 
-    
-
-    
+export type BusinessInfo = {
+    name: string;
+    address: string;
+    taxRate: number;
+    customFields: { [key: string]: string | number };
+}

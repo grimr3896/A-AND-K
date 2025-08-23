@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, PlusCircle, Check, X, Eye, EyeOff, Copy } from 'lucide-react';
+import { Loader2, Edit, PlusCircle, Check, X, Eye, EyeOff, Copy, KeyRound } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,10 +27,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { getAdminPassword, setAdminPassword } from '@/lib/mock-data';
-
-type BusinessInfo = {
-  [key: string]: string | number;
-};
+import { useBusinessInfo } from '@/contexts/business-info-context';
+import { v4 as uuidv4 } from 'uuid';
 
 const newInfoSchema = z.object({
   category: z.string().min(1, "Category is required."),
@@ -39,14 +37,8 @@ const newInfoSchema = z.object({
 
 export default function BusinessInfoPage() {
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [businessInfo, setBusinessInfo] = React.useState<BusinessInfo>({
-        "Business Name": "A & K babyshop",
-        "Address": "123 Blossom Lane, Garden City",
-        "Tax Rate (%)": 8,
-        "Admin Login Password": getAdminPassword(),
-        "API Key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    });
+    const { businessInfo, setBusinessInfo, getPassword, setPassword, getApiKey, setApiKey } = useBusinessInfo();
+    
     const [editingField, setEditingField] = React.useState<string | null>(null);
     const [passwordPrompt, setPasswordPrompt] = React.useState(false);
     const [passwordInput, setPasswordInput] = React.useState('');
@@ -54,6 +46,13 @@ export default function BusinessInfoPage() {
     const [actionToConfirm, setActionToConfirm] = React.useState<(() => void) | null>(null);
     const [sensitiveFieldVisibility, setSensitiveFieldVisibility] = React.useState<{ [key: string]: boolean }>({});
 
+    const infoToDisplay = {
+        "Business Name": businessInfo.name,
+        "Address": businessInfo.address,
+        "Tax Rate (%)": businessInfo.taxRate,
+        "Admin Login Password": getPassword(),
+        "API Key": getApiKey(),
+    };
 
     const form = useForm({
       resolver: zodResolver(newInfoSchema),
@@ -75,7 +74,7 @@ export default function BusinessInfoPage() {
     const handleEditClick = (field: string) => {
         requestPassword(() => {
             setEditingField(field);
-            setTempValue(businessInfo[field]);
+            setTempValue(infoToDisplay[field as keyof typeof infoToDisplay]);
         });
     };
     
@@ -85,7 +84,7 @@ export default function BusinessInfoPage() {
     };
 
     const handlePasswordSubmit = () => {
-        if (passwordInput === getAdminPassword()) {
+        if (passwordInput === getPassword()) {
             setPasswordPrompt(false);
             setPasswordInput('');
             actionToConfirm?.();
@@ -100,63 +99,88 @@ export default function BusinessInfoPage() {
     };
     
     const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const fieldType = typeof businessInfo[editingField!];
+      const fieldType = typeof infoToDisplay[editingField as keyof typeof infoToDisplay];
       setTempValue(fieldType === 'number' ? Number(e.target.value) : e.target.value);
     }
 
     const handleSave = () => {
       if(editingField){
-        const oldPassword = businessInfo["Admin Login Password"];
-        
         if (editingField === "Admin Login Password") {
             const newPassword = tempValue as string;
-            setAdminPassword(newPassword);
-            setBusinessInfo(prev => ({ ...prev, [editingField]: newPassword }));
+            setPassword(newPassword);
             toast({
                 title: "Security Notice",
-                description: `Password changed successfully. The new password is "${newPassword}". Please use this for future logins and protected actions.`,
+                description: `Password changed successfully. Please use this for future logins and protected actions.`,
                 duration: 9000,
             });
+        } else if (editingField === "API Key") {
+             setApiKey(tempValue as string);
+              toast({ title: "Success!", description: `API Key has been updated.` });
+        } else if (editingField === "Business Name"){
+            setBusinessInfo(prev => ({ ...prev, name: tempValue as string }));
+            toast({ title: "Success!", description: `Business Name has been updated.` });
+        } else if (editingField === "Address"){
+            setBusinessInfo(prev => ({ ...prev, address: tempValue as string }));
+            toast({ title: "Success!", description: `Address has been updated.` });
+        } else if (editingField === "Tax Rate (%)"){
+            setBusinessInfo(prev => ({ ...prev, taxRate: tempValue as number }));
+            toast({ title: "Success!", description: `Tax Rate has been updated.` });
         } else {
-           setBusinessInfo(prev => ({ ...prev, [editingField]: tempValue }));
-           toast({
-            title: "Success!",
-            description: `${editingField} has been updated.`,
-          });
+            // Handle custom fields
+            setBusinessInfo(prev => ({ ...prev, customFields: {...prev.customFields, [editingField]: tempValue }}));
+             toast({ title: "Success!", description: `${editingField} has been updated.` });
         }
         setEditingField(null);
       }
     };
     
     const handleAddNewInfo = (values: z.infer<typeof newInfoSchema>) => {
-      setBusinessInfo(prev => ({...prev, [values.category]: values.value}));
+      setBusinessInfo(prev => ({...prev, customFields: {...prev.customFields, [values.category]: values.value}}));
       toast({ title: "Success!", description: `New field "${values.category}" has been added.` });
       form.reset();
+    }
+
+    const handleGenerateApiKey = () => {
+        requestPassword(() => {
+            const newKey = uuidv4();
+            setApiKey(newKey);
+            toast({
+                title: "API Key Generated",
+                description: "A new unique API key has been generated and saved.",
+            });
+        });
     }
 
     const isSensitiveField = (key: string) => {
         return key === "Admin Login Password" || key === "API Key";
     }
 
-
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Business Information</CardTitle>
-          <CardDescription>
-            Manage your business details and settings. This information will be used across the application.
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Business Information</CardTitle>
+              <CardDescription>
+                Manage your business details and settings. This information will be used across the application.
+              </CardDescription>
+            </div>
+            <Button onClick={handleGenerateApiKey}>
+                <KeyRound className="mr-2 h-4 w-4" />
+                Generate New API Key
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-            {Object.entries(businessInfo).map(([key, value]) => (
+            {Object.entries({ ...infoToDisplay, ...businessInfo.customFields }).map(([key, value]) => (
                  <div key={key} className="flex items-center justify-between p-3 rounded-md border min-h-[72px]">
                     <div className="flex-1 overflow-hidden">
                         <p className="text-sm font-medium text-muted-foreground">{key}</p>
                         {editingField === key ? (
                              <Input
                                 type={typeof value === 'number' ? 'number' : (isSensitiveField(key) ? (sensitiveFieldVisibility[key] ? 'text' : 'password') : 'text')}
-                                value={tempValue}
+                                value={String(tempValue)}
                                 onChange={handleValueChange}
                                 className="mt-1"
                                 autoFocus
@@ -248,3 +272,4 @@ export default function BusinessInfoPage() {
     </>
   );
 }
+
