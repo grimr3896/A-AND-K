@@ -35,7 +35,6 @@ export default function SalesHistoryPage() {
             <TableRow>
               <TableHead className="w-[100px]">Details</TableHead>
               <TableHead>Sale ID</TableHead>
-              <TableHead>Customer</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Payment Method</TableHead>
               <TableHead className="text-right">Total</TableHead>
@@ -51,7 +50,6 @@ export default function SalesHistoryPage() {
                         <AccordionTrigger>Details</AccordionTrigger>
                       </TableCell>
                       <TableCell className="font-mono">{sale.id}</TableCell>
-                      <TableCell>{sale.customerName}</TableCell>
                       <TableCell>{format(new Date(sale.date), 'PPP')}</TableCell>
                       <TableCell>
                         <Badge variant={
@@ -64,7 +62,7 @@ export default function SalesHistoryPage() {
                       <TableCell className="text-right">Ksh {sale.total.toFixed(2)}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell colSpan={6} className="p-0">
+                      <TableCell colSpan={5} className="p-0">
                         <AccordionContent>
                           <div className="p-4 bg-muted/50">
                             <h4 className="font-semibold mb-2">Items in Sale #{sale.id}</h4>
