@@ -72,7 +72,7 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-        <div className="flex h-screen items-center justify-center bg-transparent">
+        <div className="flex h-screen items-center justify-center bg-background">
             <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     );
@@ -89,7 +89,7 @@ export default function DashboardLayout({
   return (
     <BusinessInfoProvider>
       <ProductsProvider>
-        <div className="grid min-h-screen w-full bg-card/80 md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
           <div className="hidden border-r bg-muted/40 md:block">
             <div className="flex h-full max-h-screen flex-col gap-2">
               <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -103,7 +103,7 @@ export default function DashboardLayout({
                   <Link
                     key={label}
                     href={href}
-                    className="flex items-center justify-between gap-4 rounded-lg px-4 py-4 text-foreground transition-all hover:text-primary font-semibold text-lg"
+                    className="flex items-center justify-between gap-4 rounded-lg px-4 py-4 text-muted-foreground transition-all hover:text-primary font-semibold text-lg"
                   >
                     <div className="flex items-center gap-4">
                       <Icon className="h-6 w-6" />
@@ -137,7 +137,7 @@ export default function DashboardLayout({
                       <Link
                         key={label}
                         href={href}
-                        className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-4 py-4 text-foreground hover:text-foreground font-semibold text-lg"
+                        className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-4 py-4 text-muted-foreground hover:text-foreground font-semibold text-lg"
                       >
                          <div className="flex items-center gap-4">
                             <Icon className="h-6 w-6" />
@@ -148,7 +148,7 @@ export default function DashboardLayout({
                     ))}
                   </nav>
                    <div className="mt-auto border-t pt-4">
-                      <button onClick={logout} className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-3 text-foreground hover:text-foreground font-semibold w-full">
+                      <button onClick={logout} className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-3 text-muted-foreground hover:text-foreground font-semibold w-full">
                           <LogOut className="h-5 w-5" />
                           Logout
                       </button>
@@ -185,7 +185,7 @@ export default function DashboardLayout({
                 </DropdownMenuContent>
               </DropdownMenu>
             </header>
-            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-transparent">
+            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
               {isProtectedRoute ? (
                 <ProtectedRoute>
                   {children}

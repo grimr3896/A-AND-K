@@ -2,15 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'PT Sans', sans-serif;
-  background-image: url('https://i.ibb.co/68Gj6zG/bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-}
-
 @layer base {
   :root {
     --background: 208 100% 97%;
@@ -73,7 +64,6 @@ body {
     @apply border-border;
   }
   body {
-    @apply text-foreground;
-    background-color: transparent; /* Ensure theme background doesn't override the image */
+    @apply bg-background text-foreground;
   }
 }
