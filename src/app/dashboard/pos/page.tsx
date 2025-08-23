@@ -23,7 +23,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, CartItem } from '@/lib/types';
-import { Shirt, Footprints, ShoppingBasket, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer, Toy, HandPlatter } from 'lucide-react';
+import { Shirt, Footprints, ShoppingBasket, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer, ToyBrick, HandPlatter } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Receipt } from './_components/receipt';
 import { useProducts } from '@/contexts/products-context';
@@ -74,7 +74,7 @@ export default function POSPage() {
         'Shirts': <Shirt />,
         'Shoes': <Footprints />,
         'Accessories': <ShoppingBasket />,
-        'Toys': <Toy />,
+        'Toys': <ToyBrick />,
         'Nursing': <HandPlatter />,
         'Default': <ShoppingCart />
     };
