@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, PlusCircle, Check, X } from 'lucide-react';
+import { Loader2, Edit, PlusCircle, Check, X, Eye, EyeOff, Copy } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +52,8 @@ export default function BusinessInfoPage() {
     const [passwordInput, setPasswordInput] = React.useState('');
     const [tempValue, setTempValue] = React.useState<string | number>('');
     const [actionToConfirm, setActionToConfirm] = React.useState<(() => void) | null>(null);
+    const [sensitiveFieldVisibility, setSensitiveFieldVisibility] = React.useState<{ [key: string]: boolean }>({});
+
 
     const form = useForm({
       resolver: zodResolver(newInfoSchema),
@@ -60,6 +62,15 @@ export default function BusinessInfoPage() {
         value: '',
       }
     });
+    
+    const toggleVisibility = (field: string) => {
+      setSensitiveFieldVisibility(prev => ({...prev, [field]: !prev[field]}));
+    }
+
+    const handleCopy = (value: string | number) => {
+        navigator.clipboard.writeText(String(value));
+        toast({ title: "Copied!", description: "The value has been copied to your clipboard."});
+    }
 
     const handleEditClick = (field: string) => {
         requestPassword(() => {
@@ -140,11 +151,11 @@ export default function BusinessInfoPage() {
         <CardContent className="space-y-4">
             {Object.entries(businessInfo).map(([key, value]) => (
                  <div key={key} className="flex items-center justify-between p-3 rounded-md border min-h-[72px]">
-                    <div>
+                    <div className="flex-1 overflow-hidden">
                         <p className="text-sm font-medium text-muted-foreground">{key}</p>
                         {editingField === key ? (
                              <Input
-                                type={typeof value === 'number' ? 'number' : (isSensitiveField(key) ? 'password' : 'text')}
+                                type={typeof value === 'number' ? 'number' : (isSensitiveField(key) ? (sensitiveFieldVisibility[key] ? 'text' : 'password') : 'text')}
                                 value={tempValue}
                                 onChange={handleValueChange}
                                 className="mt-1"
@@ -152,19 +163,35 @@ export default function BusinessInfoPage() {
                                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                              />
                         ) : (
-                             <p className="text-lg font-semibold">{isSensitiveField(key) ? '••••••••' : value}</p>
+                             <p className="text-lg font-semibold truncate">
+                                {isSensitiveField(key) && !sensitiveFieldVisibility[key] ? '••••••••' : String(value)}
+                             </p>
                         )}
                     </div>
-                     {editingField === key ? (
-                        <div className="flex gap-2">
-                             <Button onClick={handleSave} size="icon"><Check className="h-4 w-4" /></Button>
-                             <Button onClick={() => setEditingField(null)} size="icon" variant="ghost"><X className="h-4 w-4" /></Button>
-                        </div>
-                     ) : (
-                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(key)}>
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                     )}
+                     <div className="flex items-center gap-2 ml-4">
+                         {editingField === key ? (
+                            <>
+                                 <Button onClick={handleSave} size="icon"><Check className="h-4 w-4" /></Button>
+                                 <Button onClick={() => setEditingField(null)} size="icon" variant="ghost"><X className="h-4 w-4" /></Button>
+                            </>
+                         ) : (
+                            <>
+                                {isSensitiveField(key) && (
+                                    <>
+                                        <Button variant="ghost" size="icon" onClick={() => toggleVisibility(key)}>
+                                            {sensitiveFieldVisibility[key] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => handleCopy(value)}>
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                    </>
+                                )}
+                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(key)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </>
+                         )}
+                     </div>
                  </div>
             ))}
         </CardContent>
