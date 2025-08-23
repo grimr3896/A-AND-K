@@ -39,7 +39,6 @@ export default function LayawaysPage() {
       if (newLayawaysData) {
         const newLayaways = JSON.parse(newLayawaysData) as Omit<Layaway, 'id'>[];
         
-        // Add new layaways to the state, assigning unique IDs
         setLayaways(prevLayaways => {
           const updatedLayaways = [...prevLayaways];
           newLayaways.forEach((newLayaway, index) => {
@@ -49,14 +48,23 @@ export default function LayawaysPage() {
             };
             updatedLayaways.push(layawayWithId);
           });
-          return updatedLayaways;
+          return updatedLayaways.sort((a, b) => new Date(b.lastPaymentDate).getTime() - new Date(a.lastPaymentDate).getTime());
         });
-
-        // Clear the session storage to avoid adding them again on refresh
         sessionStorage.removeItem('newLayaways');
       }
+
+      const updatedLayawaysData = sessionStorage.getItem('updatedLayaways');
+      if (updatedLayawaysData) {
+        const updatedLayaways = JSON.parse(updatedLayawaysData) as { [id: string]: Layaway };
+        setLayaways(prev => 
+            prev.map(l => updatedLayaways[l.id] || l)
+                .sort((a, b) => new Date(b.lastPaymentDate).getTime() - new Date(a.lastPaymentDate).getTime())
+        );
+        sessionStorage.removeItem('updatedLayaways');
+      }
+
     } catch (error) {
-      console.error("Could not process new layaways from session storage", error);
+      console.error("Could not process layaways from session storage", error);
     }
   }, []);
 
@@ -73,7 +81,7 @@ export default function LayawaysPage() {
         id: `LAY${(layaways.length + 1).toString().padStart(3, '0')}`,
         lastPaymentDate: new Date().toISOString(),
     };
-    setLayaways(prev => [...prev, newLayaway]);
+    setLayaways(prev => [...prev, newLayaway].sort((a, b) => new Date(b.lastPaymentDate).getTime() - new Date(a.lastPaymentDate).getTime()));
     toast({ title: "Success!", description: "New layaway plan has been created."});
     setIsDialogOpen(false);
   }
@@ -101,7 +109,7 @@ export default function LayawaysPage() {
                 <TableRow 
                   key={layaway.id} 
                   onClick={() => router.push(`/dashboard/layaways/${layaway.id}`)} 
-                  className={`cursor-pointer ${isCompleted ? 'text-green-600 dark:text-green-400' : ''}`}
+                  className={`cursor-pointer ${isCompleted ? 'text-green-600 dark:text-green-400 hover:bg-green-500/10' : 'hover:bg-muted/50'}`}
                 >
                     <TableCell className="font-medium">{layaway.customerName}</TableCell>
                     <TableCell>{layaway.productName}</TableCell>
@@ -115,7 +123,7 @@ export default function LayawaysPage() {
                     </TableCell>
                     <TableCell>{format(new Date(layaway.lastPaymentDate), 'PPP')}</TableCell>
                     <TableCell className="text-right">Ksh {layaway.amountPaid.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">Ksh {remaining.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">Ksh {remaining > 0 ? remaining.toFixed(2) : '0.00'}</TableCell>
                     <TableCell className="text-right font-medium">Ksh {layaway.totalAmount.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon">
