@@ -21,6 +21,7 @@ import {
   Warehouse,
   Loader2,
   Lock,
+  Mail,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ export default function DashboardLayout({
     { href: '/dashboard/reports', label: 'Reports', icon: AreaChart, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu, roles: ['Admin'] },
+    { href: '/dashboard/email', label: 'Email Reports', icon: Mail, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/business-info', label: 'Business Info', icon: Settings, roles: ['Admin'], isLocked: true },
   ];
 
@@ -101,10 +103,10 @@ export default function DashboardLayout({
                   <Link
                     key={label}
                     href={href}
-                    className="flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-foreground transition-all hover:text-primary font-semibold"
+                    className="flex items-center justify-between gap-4 rounded-lg px-4 py-4 text-foreground transition-all hover:text-primary font-semibold text-lg"
                   >
                     <div className="flex items-center gap-4">
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-6 w-6" />
                       {label}
                     </div>
                     {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
@@ -135,7 +137,7 @@ export default function DashboardLayout({
                       <Link
                         key={label}
                         href={href}
-                        className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-foreground hover:text-foreground font-semibold"
+                        className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-4 py-4 text-foreground hover:text-foreground font-semibold text-lg"
                       >
                          <div className="flex items-center gap-4">
                             <Icon className="h-6 w-6" />

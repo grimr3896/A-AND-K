@@ -6,88 +6,55 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model Product {
-  id                Int                 @id @default(autoincrement())
-  sku               String              @unique
+  id                String    @id @default(cuid())
   name              String
-  standardPrice     Decimal             @map("standard_price")
-  minimumPrice      Decimal             @map("minimum_price")
-  stockQuantity     Int                 @map("stock_quantity")
-  description       String?
-  imageUrl          String?             @map("image_url")
+  sku               String    @unique
+  category          String
+  stock             Int
+  price             Float
+  lowStockThreshold Int
+  cost              Float
+  minPrice          Float
+  imageUrl          String?
   supplier          String?
-  category          String?
-  transactionItems  TransactionItem[]
-  priceOverrideLogs PriceOverrideLog[]
+  description       String?
+  sales             SaleItem[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
-model Customer {
-  id                 Int                  @id @default(autoincrement())
-  name               String
-  phoneNumber        String?              @map("phone_number")
-  transactions       Transaction[]
-  layawayAgreements  LayawayAgreement[]
+model Sale {
+  id            String     @id @default(cuid())
+  customerName  String
+  total         Float
+  paymentMethod String
+  items         SaleItem[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }
 
-model Transaction {
-  id               Int               @id @default(autoincrement())
-  customerId       Int               @map("customer_id")
-  dateTime         DateTime          @default(now()) @map("date_time")
-  totalAmount      Decimal           @map("total_amount")
-  paymentMethod    String            @map("payment_method")
-  customer         Customer          @relation(fields: [customerId], references: [id])
-  transactionItems TransactionItem[]
-  priceOverrideLog PriceOverrideLog?
-}
-
-model TransactionItem {
-  id            Int         @id @default(autoincrement())
-  transactionId Int         @map("transaction_id")
-  productId     Int         @map("product_id")
-  priceSold     Decimal     @map("price_sold")
-  quantity      Int
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-  product       Product     @relation(fields: [productId], references: [id])
-}
-
-model LayawayAgreement {
-  id              Int              @id @default(autoincrement())
-  customerId      Int              @map("customer_id")
-  status          String
-  totalAmount     Decimal          @map("total_amount")
-  customer        Customer         @relation(fields: [customerId], references: [id])
-  layawayPayments LayawayPayment[]
-}
-
-model LayawayPayment {
-  id               Int              @id @default(autoincrement())
-  agreementId      Int              @map("agreement_id")
-  dateTime         DateTime         @default(now()) @map("date_time")
-  amount           Decimal
-  paymentMethod    String           @map("payment_method")
-  layawayAgreement LayawayAgreement @relation(fields: [agreementId], references: [id])
+model SaleItem {
+  id        String   @id @default(cuid())
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  saleId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  price     Float // Price at the time of sale
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
-  id                Int                @id @default(autoincrement())
-  username          String             @unique
-  role              String
-  priceOverrideLogs PriceOverrideLog[]
-}
-
-model PriceOverrideLog {
-  id             Int         @id @default(autoincrement())
-  productId      Int         @map("product_id")
-  userId         Int         @map("user_id")
-  transactionId  Int         @unique @map("transaction_id")
-  originalPrice  Decimal     @map("original_price")
-  newPrice       Decimal     @map("new_price")
-  reason         String
-  product        Product     @relation(fields: [productId], references: [id])
-  user           User        @relation(fields: [userId], references: [id])
-  transaction    Transaction @relation(fields: [transactionId], references: [id])
+  id            String   @id @default(cuid())
+  username      String   @unique
+  passwordHash  String
+  role          String // e.g., 'Admin', 'Manager', 'Staff'
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
