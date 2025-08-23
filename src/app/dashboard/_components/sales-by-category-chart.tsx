@@ -6,53 +6,37 @@ import {
   ChartContainer,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
 
-const salesByCategoryData = [
-  { category: 'Clothes', sales: 45, fill: 'var(--color-clothes)' },
-  { category: 'Accessories', sales: 20, fill: 'var(--color-accessories)' },
-  { category: 'Blankets', sales: 15, fill: 'var(--color-blankets)' },
-  { category: 'Shoes', sales: 12, fill: 'var(--color-shoes)' },
-  { category: 'Bags', sales: 8, fill: 'var(--color-bags)' },
-];
+type SalesByCategoryChartProps = {
+    data: { category: string; sales: number; fill: string }[];
+    chartConfig: ChartConfig;
+}
 
-const chartConfig = {
-  sales: {
-    label: 'Sales',
-  },
-  clothes: {
-    label: 'Clothes',
-    color: 'hsl(var(--chart-1))',
-  },
-  accessories: {
-    label: 'Accessories',
-    color: 'hsl(var(--chart-2))',
-  },
-  blankets: {
-    label: 'Blankets',
-    color: 'hsl(var(--chart-3))',
-  },
-  shoes: {
-    label: 'Shoes',
-    color: 'hsl(var(--chart-4))',
-  },
-  bags: {
-    label: 'Bags',
-    color: 'hsl(var(--chart-5))',
-  },
-};
+export function SalesByCategoryChart({ data, chartConfig }: SalesByCategoryChartProps) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-[350px] w-full text-muted-foreground">
+                No sales data for this period.
+            </div>
+        );
+    }
 
-export function SalesByCategoryChart() {
   return (
     <ChartContainer config={chartConfig} className="h-[350px] w-full">
       <PieChart>
         <Tooltip
           content={<ChartTooltipContent
             nameKey="category"
-            formatter={(value) => `${value}%`}
+            formatter={(value, name, props) => {
+                const total = data.reduce((acc, curr) => acc + curr.sales, 0);
+                const percentage = total > 0 ? (Number(value) / total * 100) : 0;
+                return `${Number(value).toLocaleString()} (${percentage.toFixed(1)}%)`;
+            }}
           />}
         />
         <Pie
-          data={salesByCategoryData}
+          data={data}
           dataKey="sales"
           nameKey="category"
           cx="50%"
@@ -61,7 +45,7 @@ export function SalesByCategoryChart() {
           outerRadius={120}
           strokeWidth={2}
         >
-           {salesByCategoryData.map((entry) => (
+           {data.map((entry) => (
              <Cell key={entry.category} fill={entry.fill} />
            ))}
         </Pie>

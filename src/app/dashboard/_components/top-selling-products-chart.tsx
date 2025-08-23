@@ -7,22 +7,24 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 
-// Mock data simulating top selling products by revenue
-const topProductsData = [
-  { name: 'Organic Cotton Onesie', revenue: 79990 },
-  { name: 'Diaper Bag Backpack', revenue: 59990 },
-  { name: 'Fleece-Lined Baby Jacket', revenue: 48000 },
-  { name: 'Muslin Swaddle Blankets', revenue: 32500 },
-  { name: 'Soft Sole Leather Shoes', revenue: 25000 },
-  { name: 'Ergonomic Baby Carrier', revenue: 22000 },
-];
+type TopSellingProductsChartProps = {
+    data: { name: string; revenue: number }[];
+}
 
-export function TopSellingProductsChart() {
+export function TopSellingProductsChart({ data }: TopSellingProductsChartProps) {
+  if (!data || data.length === 0) {
+    return (
+        <div className="flex items-center justify-center h-[350px] w-full text-muted-foreground">
+            No sales data for this period.
+        </div>
+    );
+  }
+
   return (
     <ChartContainer config={{}} className="h-[350px] w-full">
       <BarChart
         layout="vertical"
-        data={topProductsData}
+        data={data}
         margin={{ top: 5, right: 20, left: 30, bottom: 5 }}
       >
         <CartesianGrid horizontal={false} />

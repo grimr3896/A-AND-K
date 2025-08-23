@@ -17,33 +17,39 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { mockSales } from '@/lib/mock-data';
+import { mockSales, mockProducts } from '@/lib/mock-data';
 import { SalesTrendChart } from './_components/sales-trend-chart';
 import { TopSellingProductsChart } from './_components/top-selling-products-chart';
 import { SalesByCategoryChart } from './_components/sales-by-category-chart';
-import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format } from 'date-fns';
+import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format, subDays } from 'date-fns';
+import type { ChartConfig } from '@/components/ui/chart';
 
-type DateRange = 'today' | 'this-week' | 'this-month' | 'this-quarter' | 'this-year';
+type DateRange = 'today' | 'this-week' | 'this-month' | 'this-year';
+
+const categoryColors: {[key: string]: string} = {
+  'Clothes': 'hsl(var(--chart-1))',
+  'Accessories': 'hsl(var(--chart-2))',
+  'Blankets': 'hsl(var(--chart-3))',
+  'Shoes': 'hsl(var(--chart-4))',
+  'Bags': 'hsl(var(--chart-5))',
+};
+
+const categoryChartConfig = Object.keys(categoryColors).reduce((acc, key) => {
+    acc[key.toLowerCase()] = { label: key, color: categoryColors[key] };
+    return acc;
+}, {} as ChartConfig);
+
 
 export default function Dashboard() {
   const [dateRange, setDateRange] = React.useState<DateRange>('this-month');
-
-  // --- KPI Calculations (based on mock data) ---
-  const todaysSales = mockSales
-    .filter(s => new Date(s.date).toDateString() === new Date().toDateString())
-    .reduce((acc, sale) => acc + sale.total, 0);
-
-  const totalRevenue = mockSales.reduce((acc, sale) => acc + sale.total, 0);
-  const monthlyTarget = 500000;
-  const monthlyProgress = (totalRevenue / monthlyTarget) * 100;
-  
-  const transactionsToday = mockSales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length;
-  const averageTransactionValue = mockSales.length > 0 ? totalRevenue / mockSales.length : 0;
 
   const filteredSalesData = React.useMemo(() => {
     const now = new Date();
     let interval;
     switch (dateRange) {
+        case 'today':
+            interval = { start: new Date(now.setHours(0,0,0,0)), end: new Date(now.setHours(23,59,59,999)) };
+            break;
         case 'this-week':
             interval = { start: startOfWeek(now), end: endOfWeek(now) };
             break;
@@ -59,6 +65,18 @@ export default function Dashboard() {
     return mockSales.filter(sale => isWithinInterval(new Date(sale.date), interval));
   }, [dateRange]);
 
+  // --- KPI Calculations (based on filtered data) ---
+    const totalRevenue = filteredSalesData.reduce((acc, sale) => acc + sale.total, 0);
+    const totalTransactions = filteredSalesData.length;
+    const averageTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+    
+    // Monthly target is independent of the filter
+    const monthlyRevenue = mockSales
+        .filter(sale => isWithinInterval(new Date(sale.date), {start: startOfMonth(new Date()), end: endOfMonth(new Date())}))
+        .reduce((acc, sale) => acc + sale.total, 0);
+    const monthlyTarget = 500000;
+    const monthlyProgress = (monthlyRevenue / monthlyTarget) * 100;
+
   const salesTrendChartData = React.useMemo(() => {
      const dataMap = new Map<string, number>();
      let dateFormat = "MMM d";
@@ -69,8 +87,39 @@ export default function Dashboard() {
          dataMap.set(key, (dataMap.get(key) || 0) + sale.total);
      });
 
-     return Array.from(dataMap.entries()).map(([date, sales]) => ({ date, sales }));
+     return Array.from(dataMap.entries()).map(([date, sales]) => ({ date, sales })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [filteredSalesData, dateRange]);
+
+  const salesByCategoryData = React.useMemo(() => {
+    const categorySales = new Map<string, number>();
+    filteredSalesData.forEach(sale => {
+        sale.items.forEach(item => {
+            const product = mockProducts.find(p => p.id === item.productId);
+            if(product) {
+                categorySales.set(product.category, (categorySales.get(product.category) || 0) + (item.price * item.quantity));
+            }
+        });
+    });
+    return Array.from(categorySales.entries()).map(([category, sales]) => ({
+        category,
+        sales,
+        fill: categoryColors[category] || 'hsl(var(--muted))'
+    }));
+  }, [filteredSalesData]);
+
+  const topSellingProductsData = React.useMemo(() => {
+      const productSales = new Map<string, { name: string; revenue: number }>();
+      filteredSalesData.forEach(sale => {
+        sale.items.forEach(item => {
+            const current = productSales.get(item.productId) || { name: item.name, revenue: 0 };
+            current.revenue += item.price * item.quantity;
+            productSales.set(item.productId, current);
+        });
+      });
+      return Array.from(productSales.values())
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 6);
+  }, [filteredSalesData]);
 
 
   return (
@@ -87,19 +136,7 @@ export default function Dashboard() {
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="this-week">This Week</SelectItem>
               <SelectItem value="this-month">This Month</SelectItem>
-              <SelectItem value="this-quarter" disabled>This Quarter</SelectItem>
               <SelectItem value="this-year">This Year</SelectItem>
-            </SelectContent>
-          </Select>
-           <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Payment Method" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="cash">Cash</SelectItem>
-              <SelectItem value="mpesa">M-Pesa</SelectItem>
-              <SelectItem value="card">Card</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -109,10 +146,11 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardDescription>For the selected period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">KSh {todaysSales.toLocaleString()}</div>
+            <div className="text-3xl font-bold">KSh {totalRevenue.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>
@@ -128,6 +166,7 @@ export default function Dashboard() {
          <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Avg. Transaction Value</CardTitle>
+             <CardDescription>For the selected period</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">KSh {averageTransactionValue.toFixed(2)}</div>
@@ -135,10 +174,11 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Transactions Today</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+            <CardDescription>For the selected period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{transactionsToday}</div>
+            <div className="text-3xl font-bold">{totalTransactions}</div>
           </CardContent>
         </Card>
       </div>
@@ -148,6 +188,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>
                 {
+                    dateRange === 'today' ? 'Today\'s Sales Trend' :
                     dateRange === 'this-week' ? 'Weekly Sales Trend' :
                     dateRange === 'this-month' ? 'Monthly Sales Trend' :
                     dateRange === 'this-year' ? 'Yearly Sales Trend' : 'Sales Trend'
@@ -163,17 +204,20 @@ export default function Dashboard() {
                 <CardTitle>Sales by Category</CardTitle>
             </CardHeader>
             <CardContent>
-                <SalesByCategoryChart />
+                <SalesByCategoryChart data={salesByCategoryData} chartConfig={categoryChartConfig}/>
             </CardContent>
         </Card>
       </div>
 
        <Card className="col-span-full">
           <CardHeader>
-            <CardTitle>Top Selling Items - This Month</CardTitle>
+            <CardTitle>Top Selling Items</CardTitle>
+             <CardDescription>
+                Top 6 products by revenue for the selected period.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <TopSellingProductsChart />
+            <TopSellingProductsChart data={topSellingProductsData} />
           </CardContent>
       </Card>
     </div>
