@@ -30,25 +30,25 @@ export default function SalesHistoryPage() {
         <CardDescription>A complete record of all sales. Click on a sale to view its details.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]"></TableHead>
-                <TableHead>Sale ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Payment Method</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[100px]">Details</TableHead>
+              <TableHead>Sale ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Payment Method</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <Accordion type="single" collapsible asChild>
             <TableBody>
               {mockSales.map((sale) => (
                 <AccordionItem value={sale.id} key={sale.id} asChild>
-                  <React.Fragment>
+                  <>
                     <TableRow>
                       <TableCell>
-                        <AccordionTrigger>Details</AccordionTrigger>
+                        <AccordionTrigger />
                       </TableCell>
                       <TableCell className="font-mono">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
@@ -93,12 +93,12 @@ export default function SalesHistoryPage() {
                         </AccordionContent>
                       </TableCell>
                     </TableRow>
-                  </React.Fragment>
+                  </>
                 </AccordionItem>
               ))}
             </TableBody>
-          </Table>
-        </Accordion>
+          </Accordion>
+        </Table>
       </CardContent>
     </Card>
   );
