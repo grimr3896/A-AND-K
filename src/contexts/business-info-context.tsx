@@ -24,7 +24,7 @@ export function BusinessInfoProvider({ children }: { children: React.ReactNode }
   const [businessInfo, setBusinessInfo] = React.useState<BusinessInfo>({
     name: "A & K babyshop",
     address: "123 Blossom Lane, Garden City",
-    taxRate: 8,
+    taxRate: 16,
     customFields: {},
   });
   
@@ -110,3 +110,5 @@ export function useBusinessInfo() {
   }
   return context;
 }
+
+    

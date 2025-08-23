@@ -28,6 +28,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Receipt } from './_components/receipt';
 import { useProducts } from '@/contexts/products-context';
 import Image from 'next/image';
+import { useBusinessInfo } from '@/contexts/business-info-context';
 
 type AgreementItem = {
     id:string;
@@ -58,6 +59,7 @@ type PendingTransaction = {
 export default function POSPage() {
     const { toast } = useToast();
     const { products, handleCheckout: processCheckout } = useProducts();
+    const { businessInfo } = useBusinessInfo();
     const [cart, setCart] = React.useState<CartItem[]>([]);
     const [agreementTable, setAgreementTable] = React.useState<AgreementItem[]>([]);
     const [amountReceived, setAmountReceived] = React.useState<number>(0);
@@ -193,10 +195,11 @@ export default function POSPage() {
         setAgreementTable(currentAgreementTable => currentAgreementTable.filter(a => a.id !== productId));
     }, []);
     
+    // Tax-inclusive pricing logic
     const subtotal = React.useMemo(() => cart.reduce((acc, item) => acc + item.agreedPrice * item.quantity, 0), [cart]);
-    const taxRate = 0.08;
-    const tax = subtotal * taxRate;
-    const total = subtotal + tax;
+    const total = subtotal; // Total is the same as subtotal (sticker price)
+    const taxRate = businessInfo.taxRate / 100; // e.g., 16% becomes 0.16
+    const tax = total - (total / (1 + taxRate)); // VAT is extracted from the total
     const changeDue = amountReceived - total;
 
     const resetSale = React.useCallback(() => {
@@ -471,8 +474,8 @@ export default function POSPage() {
                                     <span>Subtotal</span>
                                     <span className="font-mono">Ksh {subtotal.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
+                                <div className="flex justify-between text-sm text-muted-foreground">
+                                    <span>VAT (Included)</span>
                                     <span className="font-mono">Ksh {tax.toFixed(2)}</span>
                                 </div>
                                 <Separator />
@@ -572,3 +575,5 @@ export default function POSPage() {
         </>
     );
 }
+
+    

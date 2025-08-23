@@ -47,10 +47,10 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
                     <span>Subtotal</span>
                     <span>Ksh {subtotal.toFixed(2)}</span>
                 </div>
-                 {tax > 0 && <div className="flex justify-between">
-                    <span>Tax</span>
+                 <div className="flex justify-between">
+                    <span>VAT (Included)</span>
                     <span>Ksh {tax.toFixed(2)}</span>
-                </div>}
+                </div>
             </div>
             <Separator className="my-2 bg-black" />
             <div className="flex justify-between font-bold text-base">
@@ -83,3 +83,5 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
 );
 
 Receipt.displayName = "Receipt";
+
+    
