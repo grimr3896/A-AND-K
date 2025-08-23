@@ -30,20 +30,20 @@ export default function SalesHistoryPage() {
         <CardDescription>A complete record of all sales. Click on a sale to view its details.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Details</TableHead>
-              <TableHead>Sale ID</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Payment Method</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <Accordion type="multiple" asChild>
-            <TableBody>
-              {mockSales.map((sale) => (
-                <AccordionItem value={sale.id} key={sale.id} asChild>
+        <Accordion type="multiple" asChild>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Details</TableHead>
+                <TableHead>Sale ID</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Payment Method</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            {mockSales.map((sale) => (
+              <TableBody key={sale.id}>
+                <AccordionItem value={sale.id} asChild>
                   <>
                     <TableRow>
                       <TableCell>
@@ -92,10 +92,10 @@ export default function SalesHistoryPage() {
                     </TableRow>
                   </>
                 </AccordionItem>
-              ))}
-            </TableBody>
-          </Accordion>
-        </Table>
+              </TableBody>
+            ))}
+          </Table>
+        </Accordion>
       </CardContent>
     </Card>
   );
