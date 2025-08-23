@@ -22,22 +22,11 @@ import {
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import type { Product } from '@/lib/types';
-import { Shirt, Footprints, Mouse, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer } from 'lucide-react';
+import type { Product, CartItem } from '@/lib/types';
+import { Shirt, Footprints, ShoppingBasket, ShoppingCart, Minus, Plus, Trash2, CreditCard, Smartphone, DollarSign, StickyNote, PauseCircle, Printer, Toy, HandPlatter } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Receipt } from './_components/receipt';
 import { useProducts } from '@/contexts/products-context';
-
-type CartItem = {
-    id: string;
-    name: string;
-    quantity: number;
-    agreedPrice: number;
-    stock: number;
-    category: string;
-    price: number; // original price
-    minPrice: number;
-};
 
 type AgreementItem = {
     id:string;
@@ -67,7 +56,7 @@ type PendingTransaction = {
 
 export default function POSPage() {
     const { toast } = useToast();
-    const { products: mockProducts } = useProducts();
+    const { products, handleCheckout: processCheckout } = useProducts();
     const [cart, setCart] = React.useState<CartItem[]>([]);
     const [agreementTable, setAgreementTable] = React.useState<AgreementItem[]>([]);
     const [amountReceived, setAmountReceived] = React.useState<number>(0);
@@ -83,9 +72,10 @@ export default function POSPage() {
         'Dresses': <Shirt />,
         'Trousers': <Shirt />,
         'Shirts': <Shirt />,
-        'Tie': <Shirt />, // Using Shirt as fallback for Tie
         'Shoes': <Footprints />,
-        'Accessories': <Mouse />,
+        'Accessories': <ShoppingBasket />,
+        'Toys': <Toy />,
+        'Nursing': <HandPlatter />,
         'Default': <ShoppingCart />
     };
 
@@ -253,7 +243,7 @@ export default function POSPage() {
     };
 
 
-    const handleCheckout = () => {
+    const handleFinalCheckout = () => {
         if(cart.length === 0) {
             toast({ variant: 'destructive', title: 'Cart Empty', description: 'Please add products to the cart.' });
             return;
@@ -272,6 +262,9 @@ export default function POSPage() {
             amountReceived,
             changeDue
         };
+        
+        // This is where we update the central state
+        processCheckout(cart);
 
         setCompletedSale(saleData);
         setIsReceiptOpen(true);
@@ -323,7 +316,7 @@ export default function POSPage() {
         }
     }
     
-    const filteredProducts = mockProducts.filter(product => 
+    const filteredProducts = products.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -520,7 +513,7 @@ export default function POSPage() {
                                     <PauseCircle className="mr-2 h-4 w-4" />
                                     Suspend
                                 </Button>
-                                <Button size="lg" className="w-full" disabled={cart.length === 0} onClick={handleCheckout}>
+                                <Button size="lg" className="w-full" disabled={cart.length === 0} onClick={handleFinalCheckout}>
                                     Checkout
                                 </Button>
                              </div>

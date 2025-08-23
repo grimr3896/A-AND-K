@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -19,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { mockProducts } from '@/lib/mock-data';
+import { useProducts } from '@/contexts/products-context';
 import type { Product } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -33,16 +34,23 @@ type ReorderItem = Product & {
 export default function StockRequirementsPage() {
   const { hasRole } = useAuth();
   const { toast } = useToast();
+  const { products, receiveStock } = useProducts();
   
-  const lowStockProducts = mockProducts.filter(p => p.stock < p.lowStockThreshold);
+  const [reorderList, setReorderList] = React.useState<ReorderItem[]>([]);
+  
+  React.useEffect(() => {
+    const lowStockProducts = products.filter(p => p.stock < p.lowStockThreshold);
+    setReorderList(
+        lowStockProducts.map(p => ({
+        ...p,
+        // Check if the item is already in the list to preserve the ordered quantity
+        required: p.lowStockThreshold > p.stock ? p.lowStockThreshold - p.stock + 5 : 5, 
+        ordered: reorderList.find(item => item.id === p.id)?.ordered || 0,
+      }))
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]);
 
-  const [reorderList, setReorderList] = React.useState<ReorderItem[]>(
-    lowStockProducts.map(p => ({
-      ...p,
-      required: p.lowStockThreshold > p.stock ? p.lowStockThreshold - p.stock + 5 : 5, // Suggest ordering 5 more than threshold
-      ordered: 0,
-    }))
-  );
 
   const handleOrderedChange = (productId: string, value: number) => {
     if (!hasRole(['Admin', 'Manager'])) {
@@ -64,10 +72,9 @@ export default function StockRequirementsPage() {
     
     const item = reorderList.find(i => i.id === productId);
     if(item && item.ordered > 0) {
-        // In a real app, you would update the main product list state here.
-        // For this mock, we just show a toast and reset the ordered quantity.
+        receiveStock(productId, item.ordered);
         toast({ title: 'Stock Received', description: `Added ${item.ordered} units to ${item.name}.` });
-        handleOrderedChange(productId, 0);
+        handleOrderedChange(productId, 0); // Reset ordered quantity after receiving
     }
   }
 
@@ -96,7 +103,7 @@ export default function StockRequirementsPage() {
             <div>
                 <CardTitle>Stock Requirements / Reorder</CardTitle>
                 <CardDescription>
-                Track low-stock items and manage your reorders.
+                Track low-stock items and manage your reorders. This list is automatically updated based on sales.
                 </CardDescription>
             </div>
             <Button onClick={exportToCSV} variant="outline" size="sm">
@@ -135,6 +142,7 @@ export default function StockRequirementsPage() {
                     onChange={(e) => handleOrderedChange(item.id, parseInt(e.target.value) || 0)}
                     className="w-24"
                     disabled={!isEditable}
+                    min="0"
                   />
                 </TableCell>
                 <TableCell className="text-right">
