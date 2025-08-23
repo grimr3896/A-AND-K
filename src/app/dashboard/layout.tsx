@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from 'react';
@@ -19,6 +20,7 @@ import {
   TrendingUp,
   Warehouse,
   Loader2,
+  Lock,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -38,13 +40,8 @@ import { BusinessInfoProvider } from '@/contexts/business-info-context';
 import { usePathname } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 
-const protectedRoutes = [
-  '/dashboard/reports',
-  '/dashboard/profit-analysis',
+const protectedRoutesWithApiKey = [
   '/dashboard/ai-suggestions',
-  '/dashboard/business-info',
-  '/dashboard/stock-requirements',
-  '/dashboard/sales-history'
 ];
 
 export default function DashboardLayout({
@@ -63,10 +60,10 @@ export default function DashboardLayout({
     // Protected routes below
     { href: '/dashboard/stock-requirements', label: 'Stock Requirements', icon: Warehouse, roles: ['Admin', 'Manager'] },
     { href: '/dashboard/sales-history', label: 'Sales History', icon: History, roles: ['Admin', 'Manager'] },
-    { href: '/dashboard/reports', label: 'Reports', icon: AreaChart, roles: ['Admin'] },
-    { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp, roles: ['Admin'] },
+    { href: '/dashboard/reports', label: 'Reports', icon: AreaChart, roles: ['Admin'], isLocked: true },
+    { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu, roles: ['Admin'] },
-    { href: '/dashboard/business-info', label: 'Business Info', icon: Settings, roles: ['Admin'] },
+    { href: '/dashboard/business-info', label: 'Business Info', icon: Settings, roles: ['Admin'], isLocked: true },
   ];
 
   const accessibleLinks = navLinks.filter(link => hasRole(link.roles as any));
@@ -85,7 +82,7 @@ export default function DashboardLayout({
     return null;
   }
   
-  const isProtectedRoute = protectedRoutes.includes(pathname);
+  const isProtectedRoute = protectedRoutesWithApiKey.includes(pathname);
 
   return (
     <BusinessInfoProvider>
@@ -100,14 +97,17 @@ export default function DashboardLayout({
                 </Link>
               </div>
               <nav className="flex-1 overflow-auto px-2 text-sm lg:px-4">
-                {accessibleLinks.map(({ href, label, icon: Icon }) => (
+                {accessibleLinks.map(({ href, label, icon: Icon, isLocked }) => (
                   <Link
                     key={label}
                     href={href}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:text-primary font-semibold"
+                    className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:text-primary font-semibold"
                   >
-                    <Icon className="h-4 w-4" />
-                    {label}
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </div>
+                    {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
                   </Link>
                 ))}
               </nav>
@@ -131,14 +131,17 @@ export default function DashboardLayout({
                       <Flower2 className="h-6 w-6" />
                       <span className="sr-only">A & K babyshop</span>
                     </Link>
-                    {accessibleLinks.map(({ href, label, icon: Icon }) => (
+                    {accessibleLinks.map(({ href, label, icon: Icon, isLocked }) => (
                       <Link
                         key={label}
                         href={href}
-                        className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold"
+                        className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-3 py-2 text-foreground hover:text-foreground font-semibold"
                       >
-                        <Icon className="h-5 w-5" />
-                        {label}
+                         <div className="flex items-center gap-4">
+                            <Icon className="h-5 w-5" />
+                            {label}
+                        </div>
+                        {isLocked && <Lock className="h-5 w-5 text-muted-foreground" />}
                       </Link>
                     ))}
                   </nav>

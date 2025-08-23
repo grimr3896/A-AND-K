@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from 'react';
@@ -26,15 +27,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { getAdminPassword, setAdminPassword } from '@/lib/mock-data';
 import { useBusinessInfo } from '@/contexts/business-info-context';
+import { PasswordProtectedRoute } from '@/components/auth/password-protected-route';
 
 const newInfoSchema = z.object({
   category: z.string().min(1, "Category is required."),
   value: z.string().min(1, "Value is required."),
 });
 
-export default function BusinessInfoPage() {
+function BusinessInfoPageContent() {
     const { toast } = useToast();
     const { businessInfo, setBusinessInfo, getPassword, setPassword, getApiKey, setApiKey } = useBusinessInfo();
     
@@ -300,4 +301,12 @@ export default function BusinessInfoPage() {
       </AlertDialog>
     </>
   );
+}
+
+export default function BusinessInfoPage() {
+    return (
+        <PasswordProtectedRoute pageTitle="Business Info">
+            <BusinessInfoPageContent />
+        </PasswordProtectedRoute>
+    )
 }

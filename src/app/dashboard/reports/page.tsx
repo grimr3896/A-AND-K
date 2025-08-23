@@ -1,3 +1,7 @@
+
+
+"use client";
+
 import {
   Card,
   CardContent,
@@ -8,9 +12,10 @@ import {
 import { MonthlySalesChart } from './_components/monthly-sales-chart';
 import { CategorySalesChart } from './_components/category-sales-chart';
 import { BestSellingItems } from './_components/best-selling-items';
+import { PasswordProtectedRoute } from '@/components/auth/password-protected-route';
 
 
-export default function ReportsPage() {
+function ReportsPageContent() {
   return (
     <div className="grid gap-4 md:gap-8">
       <Card>
@@ -42,4 +47,12 @@ export default function ReportsPage() {
       </Card>
     </div>
   );
+}
+
+export default function ReportsPage() {
+    return (
+        <PasswordProtectedRoute pageTitle="Reports">
+            <ReportsPageContent />
+        </PasswordProtectedRoute>
+    )
 }

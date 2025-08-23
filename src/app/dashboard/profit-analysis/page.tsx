@@ -1,4 +1,7 @@
 
+
+"use client";
+
 import {
   Card,
   CardContent,
@@ -16,8 +19,10 @@ import {
 } from '@/components/ui/table';
 import { mockProducts, mockSales } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
+import { PasswordProtectedRoute } from '@/components/auth/password-protected-route';
 
-export default function ProfitAnalysisPage() {
+
+function ProfitAnalysisPageContent() {
   const profitData = mockProducts.map(product => {
     const salesOfProduct = mockSales.flatMap(sale => 
       sale.items.filter(item => item.productId === product.id)
@@ -78,4 +83,12 @@ export default function ProfitAnalysisPage() {
       </CardContent>
     </Card>
   );
+}
+
+export default function ProfitAnalysisPage() {
+    return (
+        <PasswordProtectedRoute pageTitle="Profit Analysis">
+            <ProfitAnalysisPageContent />
+        </PasswordProtectedRoute>
+    )
 }
