@@ -13,9 +13,6 @@ export default function LoginPage() {
           Welcome back! Please enter your credentials to access your dashboard.
         </p>
         <LoginForm />
-        <p className="px-8 text-center text-sm text-muted-foreground">
-          Enter a username (e.g. A&Kbabyshop, manager, or staff) and the password.
-        </p>
       </div>
     </main>
   );
