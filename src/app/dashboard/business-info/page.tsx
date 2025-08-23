@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, PlusCircle, Check, X, Eye, EyeOff, Copy, KeyRound } from 'lucide-react';
+import { Loader2, Edit, PlusCircle, Check, X, Eye, EyeOff, Copy, KeyRound, AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { getAdminPassword, setAdminPassword } from '@/lib/mock-data';
 import { useBusinessInfo } from '@/contexts/business-info-context';
-import { v4 as uuidv4 } from 'uuid';
 
 const newInfoSchema = z.object({
   category: z.string().min(1, "Category is required."),
@@ -41,6 +40,7 @@ export default function BusinessInfoPage() {
     
     const [editingField, setEditingField] = React.useState<string | null>(null);
     const [passwordPrompt, setPasswordPrompt] = React.useState(false);
+    const [isGeneratingKey, setIsGeneratingKey] = React.useState(false);
     const [passwordInput, setPasswordInput] = React.useState('');
     const [tempValue, setTempValue] = React.useState<string | number>('');
     const [actionToConfirm, setActionToConfirm] = React.useState<(() => void) | null>(null);
@@ -140,14 +140,23 @@ export default function BusinessInfoPage() {
       form.reset();
     }
 
+    const generateNewSecureApiKey = () => {
+      // In a real app, this should be done on the server-side with a crypto library
+      const array = new Uint32Array(8);
+      window.crypto.getRandomValues(array);
+      const randomString = Array.from(array, dec => ('0' + dec.toString(16)).substr(-8)).join('');
+      return `ak_${randomString}`;
+    }
+
     const handleGenerateApiKey = () => {
         requestPassword(() => {
-            const newKey = uuidv4();
+            const newKey = generateNewSecureApiKey();
             setApiKey(newKey);
             toast({
                 title: "API Key Generated",
                 description: "A new unique API key has been generated and saved.",
             });
+            setIsGeneratingKey(false);
         });
     }
 
@@ -166,7 +175,7 @@ export default function BusinessInfoPage() {
                 Manage your business details and settings. This information will be used across the application.
               </CardDescription>
             </div>
-            <Button onClick={handleGenerateApiKey}>
+            <Button onClick={() => setIsGeneratingKey(true)}>
                 <KeyRound className="mr-2 h-4 w-4" />
                 Generate New API Key
             </Button>
@@ -188,7 +197,7 @@ export default function BusinessInfoPage() {
                              />
                         ) : (
                              <p className="text-lg font-semibold truncate">
-                                {isSensitiveField(key) && !sensitiveFieldVisibility[key] ? '••••••••' : String(value)}
+                                {isSensitiveField(key) && !sensitiveFieldVisibility[key] ? '••••••••••••••••' : String(value)}
                              </p>
                         )}
                     </div>
@@ -269,7 +278,26 @@ export default function BusinessInfoPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={isGeneratingKey} onOpenChange={setIsGeneratingKey}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="text-destructive" />
+                    Generate New API Key?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                    Generating a new API key will invalidate the old one immediately. Any services or integrations using the old key will stop working. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleGenerateApiKey} className="bg-destructive hover:bg-destructive/90">
+                    Yes, Generate New Key
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
-
