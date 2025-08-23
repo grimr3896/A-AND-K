@@ -30,70 +30,72 @@ export default function SalesHistoryPage() {
         <CardDescription>A complete record of all sales. Click on a sale to view its details.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="multiple" className="w-full">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Details</TableHead>
-                <TableHead>Sale ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Payment Method</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[100px]">Details</TableHead>
+              <TableHead>Sale ID</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Payment Method</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <Accordion type="multiple" className="w-full" asChild>
             <TableBody>
               {mockSales.map((sale) => (
-                <AccordionItem value={sale.id} key={sale.id}>
-                   <TableRow>
-                    <TableCell>
-                      <AccordionTrigger>Details</AccordionTrigger>
-                    </TableCell>
-                    <TableCell className="font-mono">{sale.id}</TableCell>
-                    <TableCell>{format(new Date(sale.date), 'PPP')}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        sale.paymentMethod === 'Card' ? 'default' : 
-                        sale.paymentMethod === 'M-Pesa' ? 'secondary' : 'outline'
-                      }>
-                        {sale.paymentMethod}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">Ksh {sale.total.toFixed(2)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={5} className="p-0">
-                      <AccordionContent>
-                        <div className="p-4 bg-muted/50">
-                          <h4 className="font-semibold mb-2">Items in Sale #{sale.id}</h4>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Product Name</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead className="text-right">Price Sold At</TableHead>
-                                <TableHead className="text-right">Subtotal</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {sale.items.map((item, index) => (
-                                <TableRow key={`${sale.id}-${item.productId}-${index}`}>
-                                  <TableCell>{item.name}</TableCell>
-                                  <TableCell>{item.quantity}</TableCell>
-                                  <TableCell className="text-right">Ksh {item.price.toFixed(2)}</TableCell>
-                                  <TableCell className="text-right">Ksh {(item.price * item.quantity).toFixed(2)}</TableCell>
+                <AccordionItem value={sale.id} key={sale.id} asChild>
+                  <>
+                    <TableRow>
+                      <TableCell>
+                        <AccordionTrigger>Details</AccordionTrigger>
+                      </TableCell>
+                      <TableCell className="font-mono">{sale.id}</TableCell>
+                      <TableCell>{format(new Date(sale.date), 'PPP')}</TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          sale.paymentMethod === 'Card' ? 'default' : 
+                          sale.paymentMethod === 'M-Pesa' ? 'secondary' : 'outline'
+                        }>
+                          {sale.paymentMethod}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">Ksh {sale.total.toFixed(2)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={5} className="p-0">
+                        <AccordionContent>
+                          <div className="p-4 bg-muted/50">
+                            <h4 className="font-semibold mb-2">Items in Sale #{sale.id}</h4>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Product Name</TableHead>
+                                  <TableHead>Quantity</TableHead>
+                                  <TableHead className="text-right">Price Sold At</TableHead>
+                                  <TableHead className="text-right">Subtotal</TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </AccordionContent>
-                    </TableCell>
-                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {sale.items.map((item, index) => (
+                                  <TableRow key={`${sale.id}-${item.productId}-${index}`}>
+                                    <TableCell>{item.name}</TableCell>
+                                    <TableCell>{item.quantity}</TableCell>
+                                    <TableCell className="text-right">Ksh {item.price.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">Ksh {(item.price * item.quantity).toFixed(2)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </AccordionContent>
+                      </TableCell>
+                    </TableRow>
+                  </>
                 </AccordionItem>
               ))}
             </TableBody>
-          </Table>
-        </Accordion>
+          </Accordion>
+        </Table>
       </CardContent>
     </Card>
   );
