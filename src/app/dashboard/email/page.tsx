@@ -12,7 +12,8 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { generateEmailReport, EmailReportInput } from '@/ai/flows/generate-email-report';
+import { generateEmailReport } from '@/ai/flows/generate-email-report';
+import type { EmailReportInput } from '@/lib/types';
 import { Loader2, Send, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PasswordProtectedRoute } from '@/components/auth/password-protected-route';

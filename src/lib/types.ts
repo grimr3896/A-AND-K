@@ -1,5 +1,7 @@
 
 
+import { z } from 'zod';
+
 export type Product = {
   id: string;
   name: string;
@@ -82,3 +84,27 @@ export type BusinessInfo = {
     taxRate: number;
     customFields: { [key: string]: string | number };
 }
+
+// Types for Email Report Generation
+const ProductSaleSchema = z.object({
+    name: z.string(),
+    quantitySold: z.number(),
+    totalRevenue: z.number(),
+});
+
+const StockInfoSchema = z.object({
+    name: z.string(),
+    quantityInStock: z.number(),
+});
+
+export const EmailReportInputSchema = z.object({
+  salesData: z.array(ProductSaleSchema).describe("A list of products sold, including quantities and revenue."),
+  lowStockItems: z.array(StockInfoSchema).describe("A list of items that are low in stock."),
+  outOfStockItems: z.array(StockInfoSchema).describe("A list of items that are completely out of stock."),
+});
+export type EmailReportInput = z.infer<typeof EmailReportInputSchema>;
+
+export const EmailReportOutputSchema = z.object({
+  htmlBody: z.string().describe("The full HTML content of the email report."),
+});
+export type EmailReportOutput = z.infer<typeof EmailReportOutputSchema>;

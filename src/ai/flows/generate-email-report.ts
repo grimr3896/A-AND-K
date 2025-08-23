@@ -4,35 +4,11 @@
  * @fileOverview An AI tool that generates a daily sales and inventory report email.
  *
  * - generateEmailReport - A function that handles the email generation process.
- * - EmailReportInput - The input type for the generateEmailReport function.
- * - EmailReportOutput - The return type for the generateEmailReport function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { EmailReportInputSchema, EmailReportOutputSchema, type EmailReportInput, type EmailReportOutput } from '@/lib/types';
 
-const ProductSaleSchema = z.object({
-    name: z.string(),
-    quantitySold: z.number(),
-    totalRevenue: z.number(),
-});
-
-const StockInfoSchema = z.object({
-    name: z.string(),
-    quantityInStock: z.number(),
-});
-
-export const EmailReportInputSchema = z.object({
-  salesData: z.array(ProductSaleSchema).describe("A list of products sold, including quantities and revenue."),
-  lowStockItems: z.array(StockInfoSchema).describe("A list of items that are low in stock."),
-  outOfStockItems: z.array(StockInfoSchema).describe("A list of items that are completely out of stock."),
-});
-export type EmailReportInput = z.infer<typeof EmailReportInputSchema>;
-
-export const EmailReportOutputSchema = z.object({
-  htmlBody: z.string().describe("The full HTML content of the email report."),
-});
-export type EmailReportOutput = z.infer<typeof EmailReportOutputSchema>;
 
 export async function generateEmailReport(input: EmailReportInput): Promise<EmailReportOutput> {
   return emailReportFlow(input);
