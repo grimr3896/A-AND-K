@@ -37,7 +37,7 @@ const newInfoSchema = z.object({
 
 function BusinessInfoPageContent() {
     const { toast } = useToast();
-    const { businessInfo, setBusinessInfo, getPassword, setPassword, getApiKey, setApiKey } = useBusinessInfo();
+    const { businessInfo, setBusinessInfo, getPassword, setPassword, getResendApiKey, setResendApiKey, getFromEmail, setFromEmail, getRecipientEmail, setRecipientEmail } = useBusinessInfo();
     
     const [editingField, setEditingField] = React.useState<string | null>(null);
     const [passwordPrompt, setPasswordPrompt] = React.useState(false);
@@ -52,7 +52,9 @@ function BusinessInfoPageContent() {
         "Address": businessInfo.address,
         "Tax Rate (%)": businessInfo.taxRate,
         "Admin Login Password": getPassword(),
-        "API Key": getApiKey(),
+        "Resend API Key": getResendApiKey(),
+        "From Email": getFromEmail(),
+        "Recipient Email": getRecipientEmail(),
     };
 
     const form = useForm({
@@ -114,9 +116,15 @@ function BusinessInfoPageContent() {
                 description: `Password changed successfully. Please use this for future logins and protected actions.`,
                 duration: 9000,
             });
-        } else if (editingField === "API Key") {
-             setApiKey(tempValue as string);
-              toast({ title: "Success!", description: `API Key has been updated.` });
+        } else if (editingField === "Resend API Key") {
+             setResendApiKey(tempValue as string);
+              toast({ title: "Success!", description: `Resend API Key has been updated.` });
+        } else if (editingField === "From Email") {
+             setFromEmail(tempValue as string);
+              toast({ title: "Success!", description: `"From" email address has been updated.` });
+        } else if (editingField === "Recipient Email") {
+             setRecipientEmail(tempValue as string);
+              toast({ title: "Success!", description: `"Recipient" email address has been updated.` });
         } else if (editingField === "Business Name"){
             setBusinessInfo(prev => ({ ...prev, name: tempValue as string }));
             toast({ title: "Success!", description: `Business Name has been updated.` });
@@ -143,16 +151,16 @@ function BusinessInfoPageContent() {
 
     const generateNewSecureApiKey = () => {
       // In a real app, this should be done on the server-side with a crypto library
-      const array = new Uint32Array(8);
+      const array = new Uint32Array(16);
       window.crypto.getRandomValues(array);
       const randomString = Array.from(array, dec => ('0' + dec.toString(16)).substr(-8)).join('');
-      return `ak_${randomString}`;
+      return `re_` + randomString;
     }
 
     const handleGenerateApiKey = () => {
         requestPassword(() => {
             const newKey = generateNewSecureApiKey();
-            setApiKey(newKey);
+            setResendApiKey(newKey);
             toast({
                 title: "API Key Generated",
                 description: "A new unique API key has been generated and saved.",
@@ -162,7 +170,7 @@ function BusinessInfoPageContent() {
     }
 
     const isSensitiveField = (key: string) => {
-        return key === "Admin Login Password" || key === "API Key";
+        return key === "Admin Login Password" || key === "Resend API Key";
     }
 
   return (

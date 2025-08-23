@@ -19,12 +19,22 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PasswordProtectedRoute } from '@/components/auth/password-protected-route';
 import { mockProducts, mockSales } from '@/lib/mock-data'; 
 import { sendEmail } from './_actions/send-email';
+import { useBusinessInfo } from '@/contexts/business-info-context';
+import Link from 'next/link';
 
 
 function EmailPageContent() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [reportHtml, setReportHtml] = React.useState<string | null>(null);
+  const { getResendApiKey, getFromEmail, getRecipientEmail } = useBusinessInfo();
+  
+  const isEmailConfigured = () => {
+      const key = getResendApiKey();
+      const from = getFromEmail();
+      const recipient = getRecipientEmail();
+      return key && !key.startsWith('re_xxxx') && from && recipient;
+  }
 
   const handleGenerateAndSend = async () => {
     setIsLoading(true);
@@ -56,7 +66,13 @@ function EmailPageContent() {
       setReportHtml(result.htmlBody);
       
       // 3. Send the email via Server Action
-      const sendResult = await sendEmail(result.htmlBody);
+      const emailPayload = {
+          htmlContent: result.htmlBody,
+          apiKey: getResendApiKey(),
+          fromEmail: getFromEmail(),
+          toEmail: getRecipientEmail()
+      }
+      const sendResult = await sendEmail(emailPayload);
 
       if (sendResult.error) {
         throw new Error(sendResult.error);
@@ -88,21 +104,36 @@ function EmailPageContent() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                 <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>How It Works</AlertTitle>
-                    <AlertDescription>
-                        <ol className="list-decimal list-inside space-y-1">
-                            <li>Clicking the button gathers the latest sales and stock data.</li>
-                            <li>An AI flow organizes this data into a professional HTML email.</li>
-                            <li>The generated email is sent using the Resend service.</li>
-                            <li>Ensure your Resend API key is set in the <code>.env</code> file.</li>
-                        </ol>
-                    </AlertDescription>
-                </Alert>
+                {!isEmailConfigured() ? (
+                     <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Email Service Not Configured</AlertTitle>
+                        <AlertDescription>
+                          <p className="mb-4">
+                            Please set your Resend API Key, From Email, and Recipient Email in the business settings before you can send reports.
+                          </p>
+                           <Button asChild>
+                                <Link href="/dashboard/business-info">Go to Settings</Link>
+                           </Button>
+                        </AlertDescription>
+                    </Alert>
+                ) : (
+                    <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>How It Works</AlertTitle>
+                        <AlertDescription>
+                            <ol className="list-decimal list-inside space-y-1">
+                                <li>Clicking the button gathers the latest sales and stock data.</li>
+                                <li>An AI flow organizes this data into a professional HTML email.</li>
+                                <li>The generated email is sent using the Resend service.</li>
+                                <li>Your settings are correctly configured. Ready to send.</li>
+                            </ol>
+                        </AlertDescription>
+                    </Alert>
+                )}
             </CardContent>
             <CardFooter>
-                 <Button onClick={handleGenerateAndSend} disabled={isLoading}>
+                 <Button onClick={handleGenerateAndSend} disabled={isLoading || !isEmailConfigured()}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                     {isLoading ? 'Generating and Sending...' : 'Generate and Send Report'}
                 </Button>

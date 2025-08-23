@@ -3,15 +3,19 @@
 
 import * as React from 'react';
 import type { BusinessInfo } from '@/lib/types';
-import { getAdminPassword as getDefaultPassword, getApiKey as getDefaultApiKey } from '@/lib/mock-data';
+import { getAdminPassword as getDefaultPassword } from '@/lib/mock-data';
 
 type BusinessInfoContextType = {
   businessInfo: BusinessInfo;
   setBusinessInfo: React.Dispatch<React.SetStateAction<BusinessInfo>>;
   getPassword: () => string;
   setPassword: (password: string) => void;
-  getApiKey: () => string;
-  setApiKey: (apiKey: string) => void;
+  getResendApiKey: () => string;
+  setResendApiKey: (apiKey: string) => void;
+  getFromEmail: () => string;
+  setFromEmail: (email: string) => void;
+  getRecipientEmail: () => string;
+  setRecipientEmail: (email: string) => void;
 };
 
 const BusinessInfoContext = React.createContext<BusinessInfoContextType | undefined>(undefined);
@@ -32,14 +36,28 @@ export function BusinessInfoProvider({ children }: { children: React.ReactNode }
     return getDefaultPassword();
   });
 
-  const [apiKey, setInternalApiKey] = React.useState(() => {
+  const [resendApiKey, setInternalResendApiKey] = React.useState(() => {
      if (typeof window !== 'undefined') {
-        return localStorage.getItem('apiKey') || getDefaultApiKey();
+        return localStorage.getItem('resendApiKey') || 're_xxxxxxxx_xxxxxxxx';
      }
-     return getDefaultApiKey();
+     return 're_xxxxxxxx_xxxxxxxx';
   });
+  
+  const [fromEmail, setInternalFromEmail] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+       return localStorage.getItem('fromEmail') || 'onboarding@resend.dev';
+    }
+    return 'onboarding@resend.dev';
+ });
 
-  // When password or apiKey changes, update localStorage
+ const [recipientEmail, setInternalRecipientEmail] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+       return localStorage.getItem('recipientEmail') || 'delivered@resend.dev';
+    }
+    return 'delivered@resend.dev';
+ });
+
+  // When sensitive info changes, update localStorage
   React.useEffect(() => {
      if (typeof window !== 'undefined') {
         localStorage.setItem('adminPassword', password);
@@ -48,17 +66,35 @@ export function BusinessInfoProvider({ children }: { children: React.ReactNode }
 
   React.useEffect(() => {
      if (typeof window !== 'undefined') {
-        localStorage.setItem('apiKey', apiKey);
+        localStorage.setItem('resendApiKey', resendApiKey);
      }
-  }, [apiKey]);
+  }, [resendApiKey]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+       localStorage.setItem('fromEmail', fromEmail);
+    }
+    }, [fromEmail]);
+
+    React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+       localStorage.setItem('recipientEmail', recipientEmail);
+    }
+    }, [recipientEmail]);
   
   const getPassword = () => password;
   const setPassword = (newPassword: string) => setInternalPassword(newPassword);
   
-  const getApiKey = () => apiKey;
-  const setApiKey = (newApiKey: string) => setInternalApiKey(newApiKey);
+  const getResendApiKey = () => resendApiKey;
+  const setResendApiKey = (newApiKey: string) => setInternalResendApiKey(newApiKey);
+  
+  const getFromEmail = () => fromEmail;
+  const setFromEmail = (email: string) => setInternalFromEmail(email);
 
-  const value = { businessInfo, setBusinessInfo, getPassword, setPassword, getApiKey, setApiKey };
+  const getRecipientEmail = () => recipientEmail;
+  const setRecipientEmail = (email: string) => setInternalRecipientEmail(email);
+
+  const value = { businessInfo, setBusinessInfo, getPassword, setPassword, getResendApiKey, setResendApiKey, getFromEmail, setFromEmail, getRecipientEmail, setRecipientEmail };
 
   return (
     <BusinessInfoContext.Provider value={value}>

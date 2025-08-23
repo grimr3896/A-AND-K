@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
-import { getApiKey as getDefaultApiKey } from '@/lib/mock-data';
+import { getAdminPassword as getDefaultPassword } from '@/lib/mock-data';
 
 export function useAuth() {
   const [user, setUser] = React.useState<User | null>(null);
