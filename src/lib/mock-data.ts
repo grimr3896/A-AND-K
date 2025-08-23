@@ -12,7 +12,7 @@ export const setAdminPassword = (newPassword: string) => {
 };
 
 // Default API key
-export const getApiKey = () => "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+export const getApiKey = () => "ak_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
 
 
 export const mockProducts: Product[] = [

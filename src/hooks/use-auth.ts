@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
+import { getApiKey as getDefaultApiKey } from '@/lib/mock-data';
 
 export function useAuth() {
   const [user, setUser] = React.useState<User | null>(null);
@@ -31,7 +32,11 @@ export function useAuth() {
   const hasValidApiKey = () => {
     if (typeof window !== 'undefined') {
         const storedApiKey = localStorage.getItem('apiKey');
-        return storedApiKey && storedApiKey.length > 0;
+        // TEST: Temporarily consider the default key as invalid for testing purposes
+        if (!storedApiKey || storedApiKey.startsWith('ak_xxxx')) {
+            return false;
+        }
+        return true;
     }
     return false;
   }
