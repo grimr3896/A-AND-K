@@ -68,11 +68,12 @@ export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway }: AddLaya
   const selectedProductId = form.watch('productId');
 
   React.useEffect(() => {
-    if (selectedProductId) {
-      const product = products.find(p => p.id === selectedProductId);
-      if (product) {
-        form.setValue('totalAmount', product.price);
-      }
+    const product = products.find(p => p.id === selectedProductId);
+    if (product) {
+      form.setValue('totalAmount', product.price);
+    } else {
+      // Clear the amount if no product is selected
+      form.setValue('totalAmount', 0);
     }
   }, [selectedProductId, products, form]);
 
