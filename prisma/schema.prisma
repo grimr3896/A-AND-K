@@ -2,20 +2,19 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  engineType      = "node-api"
-  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+  provider   = "prisma-client-js"
+  engineType = "node-api" // Use the Node-API library engine for portability
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 model Product {
   id                String  @id @default(cuid())
   name              String
-  sku               String? @unique
+  sku               String  @unique
   category          String
   stock             Int
   price             Float
@@ -25,31 +24,34 @@ model Product {
   supplier          String?
   description       String?
   imageUrl          String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  saleItems SaleItem[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  saleItems         SaleItem[]
 }
 
 model Sale {
-  id            String    @id @default(cuid())
-  date          DateTime  @default(now())
+  id            String     @id @default(cuid())
+  date          DateTime   @default(now())
   customerName  String
   total         Float
   paymentMethod String
   items         SaleItem[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }
 
 model SaleItem {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   saleId    String
-  sale      Sale     @relation(fields: [saleId], references: [id])
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
   name      String
   quantity  Int
   price     Float
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([saleId])
+  @@index([productId])
 }
 
 model Layaway {
@@ -58,7 +60,7 @@ model Layaway {
   productName     String
   totalAmount     Float
   amountPaid      Float
-  status          String // "Pending", "Paid", "Cancelled"
+  status          String // e.g., 'Pending', 'Paid', 'Cancelled'
   lastPaymentDate DateTime
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -68,16 +70,12 @@ model Layaway {
 model Payment {
   id        String   @id @default(cuid())
   layawayId String
-  layaway   Layaway  @relation(fields: [layawayId], references: [id])
-  date      DateTime @default(now())
   amount    Float
   method    String
-}
+  date      DateTime @default(now())
+  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
 
-model User {
-  id       String @id @default(cuid())
-  username String @unique
-  role     String // Admin, Manager, Staff
+  @@index([layawayId])
 }
 
 model AuditLog {
@@ -86,4 +84,10 @@ model AuditLog {
   user      String
   action    String
   details   String
+}
+
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  role     String // Admin, Manager, Staff
 }

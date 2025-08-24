@@ -12,7 +12,7 @@ const prismaClientSingleton = () => {
   // We'll use a more reliable check for a packaged app environment.
   // A common practice for Electron apps is to check for `app.isPackaged`.
   // Since we are in a Node.js backend context, we can simulate this by checking NODE_ENV.
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
     // This is where the database will live in a packaged desktop app.
     // It ensures each user has their own database in their local app data folder.
     const userDataPath = os.homedir(); // Simplified for cross-platform compatibility. A real app might use a library for this.
