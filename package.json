@@ -13,6 +13,9 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate"
   },
+  "prisma": {
+    "engineType": "node-api"
+  },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
     "@genkit-ai/next": "^1.14.1",
