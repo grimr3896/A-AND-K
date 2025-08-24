@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -54,7 +55,16 @@ const suggestReorderItemsFlow = ai.defineFlow(
     outputSchema: SuggestReorderItemsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+        const {output} = await prompt(input);
+        if (!output) {
+            throw new Error("AI failed to generate suggestions. The output was empty.");
+        }
+        return output;
+    } catch (error: any) {
+        console.error("Error in suggestReorderItemsFlow:", error);
+        // Re-throw a more user-friendly error message
+        throw new Error(`AI suggestion failed: ${error.message || 'An unexpected error occurred.'}`);
+    }
   }
 );

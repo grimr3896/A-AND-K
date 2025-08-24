@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -50,7 +51,7 @@ export function AiReorderForm({ defaultSalesData, defaultProductDetails }: AiReo
       const response = await suggestReorderItems(values);
       setResult(response);
     } catch (e: any) {
-      setError(e.message || "An unexpected error occurred.");
+      setError(e.message || "An unexpected error occurred while getting suggestions.");
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +96,7 @@ export function AiReorderForm({ defaultSalesData, defaultProductDetails }: AiReo
 
       {error && (
         <Alert variant="destructive" className="mt-8">
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Error Generating Suggestions</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -103,24 +104,30 @@ export function AiReorderForm({ defaultSalesData, defaultProductDetails }: AiReo
       {result && result.itemsToReorder && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4">Reorder Suggestions</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product Name</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Reason</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {result.itemsToReorder.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{item.productName}</TableCell>
-                  <TableCell>{item.quantity}</TableCell>
-                  <TableCell>{item.reason}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+           {result.itemsToReorder.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Product Name</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Reason</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {result.itemsToReorder.map((item, index) => (
+                        <TableRow key={index}>
+                        <TableCell className="font-medium">{item.productName}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{item.reason}</TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+            ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                    The AI did not find any items that need reordering at this time.
+                </div>
+            )}
         </div>
       )}
     </FormProvider>

@@ -64,7 +64,16 @@ const emailReportFlow = ai.defineFlow(
     outputSchema: EmailReportOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+        const {output} = await prompt(input);
+        if (!output) {
+            throw new Error("AI failed to generate a report. The output was empty.");
+        }
+        return output;
+    } catch (error: any) {
+        console.error("Error in emailReportFlow:", error);
+        // Re-throw a more user-friendly error message
+        throw new Error(`AI generation failed: ${error.message || 'An unexpected error occurred.'}`);
+    }
   }
 );

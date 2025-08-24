@@ -62,10 +62,12 @@ function EmailPageContent() {
       };
 
       // 2. Generate Report using Genkit Flow
+      toast({ title: "Generating Report...", description: "The AI is creating the HTML report." });
       const result = await generateEmailReport(aiInput);
       setReportHtml(result.htmlBody);
       
       // 3. Send the email via Server Action
+      toast({ title: "Sending Email...", description: "The report is being sent." });
       const emailPayload = {
           htmlContent: result.htmlBody,
           apiKey: getResendApiKey(),
@@ -88,6 +90,7 @@ function EmailPageContent() {
         variant: 'destructive',
         title: 'An Error Occurred',
         description: e.message || 'Failed to generate or send the report.',
+        duration: 9000,
       });
     } finally {
       setIsLoading(false);
@@ -135,7 +138,7 @@ function EmailPageContent() {
             <CardFooter>
                  <Button onClick={handleGenerateAndSend} disabled={isLoading || !isEmailConfigured()}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    {isLoading ? 'Generating and Sending...' : 'Generate and Send Report'}
+                    {isLoading ? 'Processing...' : 'Generate and Send Report'}
                 </Button>
             </CardFooter>
         </Card>
