@@ -5,19 +5,24 @@ datasource db {
 }
 
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "node-api"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       String   @id @default(cuid())
+  username String   @unique
+  role     String
+  createdAt DateTime @default(now())
 }
 
 model Product {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   name              String
-  sku               String? @unique
+  sku               String?  @unique
   category          String
   stock             Int
   price             Float
-  lowStockThreshold Int
+  lowStockThreshold Int      @default(5)
   cost              Float
   minPrice          Float
   supplier          String?
@@ -26,33 +31,27 @@ model Product {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   
-  saleItems         SaleItem[]
+  saleItems SaleItem[]
 }
 
 model Sale {
-  id            String      @id @default(cuid())
-  date          DateTime    @default(now())
+  id            String     @id @default(cuid())
+  date          DateTime   @default(now())
   customerName  String
+  items         SaleItem[]
   total         Float
   paymentMethod String
-  items         SaleItem[]
-  createdAt     DateTime @default(now())
 }
 
 model SaleItem {
-  id         String   @id @default(cuid())
-  saleId     String
-  productId  String
-  name       String
-  quantity   Int
-  price      Float
-  createdAt  DateTime @default(now())
-
-  sale       Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product    Product @relation(fields: [productId], references: [id])
-
-  @@index([saleId])
-  @@index([productId])
+  id        String   @id @default(cuid())
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  saleId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  name      String
+  quantity  Int
+  price     Float
 }
 
 model Layaway {
@@ -61,24 +60,20 @@ model Layaway {
   productName     String
   totalAmount     Float
   amountPaid      Float
-  status          String // Pending, Paid, Cancelled
-  lastPaymentDate DateTime
+  status          String
+  lastPaymentDate DateTime  @default(now())
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-
   payments        Payment[]
 }
 
 model Payment {
-  id        String   @id @default(cuid())
-  layawayId String
-  date      DateTime @default(now())
-  amount    Float
-  method    String // Cash, M-Pesa, Card, Initial Deposit
-
-  layaway   Layaway @relation(fields: [layawayId], references: [id], onDelete: Cascade)
-  
-  @@index([layawayId])
+  id         String   @id @default(cuid())
+  layaway    Layaway  @relation(fields: [layawayId], references: [id])
+  layawayId  String
+  date       DateTime @default(now())
+  amount     Float
+  method     String
 }
 
 model AuditLog {
@@ -87,10 +82,4 @@ model AuditLog {
   user      String
   action    String
   details   String
-}
-
-model User {
-  id        String @id @default(cuid())
-  username  String @unique
-  role      String // Admin, Manager, Staff
 }
