@@ -1,17 +1,19 @@
+
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
 
 generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
 }
 
 model Product {
-  id                String    @id @default(cuid())
+  id                String  @id @default(cuid())
   name              String
-  sku               String?   @unique
+  sku               String? @unique
   category          String
   stock             Int
   price             Float
@@ -21,19 +23,19 @@ model Product {
   supplier          String?
   description       String?
   imageUrl          String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+
+  saleItems SaleItem[]
 }
 
 model User {
   id       String @id @default(cuid())
   username String @unique
-  role     String // Changed from enum
+  role     String
 }
 
 model Sale {
-  id            String    @id @default(cuid())
-  date          DateTime  @default(now())
+  id            String     @id @default(cuid())
+  date          DateTime   @default(now())
   customerName  String
   total         Float
   paymentMethod String
@@ -41,9 +43,10 @@ model Sale {
 }
 
 model SaleItem {
-  id        String  @id @default(cuid())
-  sale      Sale    @relation(fields: [saleId], references: [id])
+  id        String   @id @default(cuid())
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
   productId String
   name      String
   quantity  Int
@@ -56,16 +59,15 @@ model Layaway {
   productName     String
   totalAmount     Float
   amountPaid      Float
-  status          String    // e.g., "Pending", "Paid", "Cancelled"
+  status          String
   lastPaymentDate DateTime
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
   payments        Payment[]
 }
 
 model Payment {
   id        String   @id @default(cuid())
-  layaway   Layaway  @relation(fields: [layawayId], references: [id])
+  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
   layawayId String
   date      DateTime @default(now())
   amount    Float
@@ -73,9 +75,9 @@ model Payment {
 }
 
 model AuditLog {
-  id        Int      @id @default(autoincrement())
-  timestamp DateTime @default(now())
-  user      String
-  action    String
-  details   String
+  id      String   @id @default(cuid())
+  date    DateTime @default(now())
+  user    String
+  action  String
+  details String
 }
