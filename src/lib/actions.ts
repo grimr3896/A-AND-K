@@ -22,6 +22,24 @@ export async function getProducts() {
 }
 
 export async function addProduct(productData: Omit<Product, 'id'>, user: string) {
+  // Check for duplicate name
+  const existingByName = await prisma.product.findFirst({
+    where: { name: productData.name },
+  });
+  if (existingByName) {
+    throw new Error(`A product with the name "${productData.name}" already exists.`);
+  }
+
+  // Check for duplicate SKU
+  if (productData.sku) {
+    const existingBySku = await prisma.product.findFirst({
+        where: { sku: productData.sku },
+    });
+    if (existingBySku) {
+        throw new Error(`A product with the SKU "${productData.sku}" already exists.`);
+    }
+  }
+  
   const newProduct = await prisma.product.create({
     data: productData,
   });

@@ -44,9 +44,16 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProducts]);
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
-    if(!user) return;
-    await addProductAction(product, user.username);
-    await fetchProducts(); // Re-fetch to get the latest list
+    if(!user) throw new Error("User not authenticated");
+    try {
+        await addProductAction(product, user.username);
+        await fetchProducts(); // Re-fetch to get the latest list
+    } catch (error: any) {
+        // This will catch the error thrown from the action and display it
+        console.error("Failed to add product:", error);
+        toast({ variant: "destructive", title: "Error Adding Product", description: error.message });
+        throw error; // Re-throw to indicate failure to the caller
+    }
   };
 
   const updateProduct = async (updatedProduct: Product) => {

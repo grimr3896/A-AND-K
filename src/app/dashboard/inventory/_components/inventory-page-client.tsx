@@ -120,13 +120,18 @@ export default function InventoryPageClient() {
   const handleProductSubmit = async (submittedProduct: Omit<Product, 'id'> | Product) => {
     if (!user) return;
     
-    if ('id' in submittedProduct) {
-      await updateProduct(submittedProduct as Product);
-    } else {
-      await addProduct(submittedProduct as Omit<Product, 'id'>);
+    try {
+        if ('id' in submittedProduct) {
+          await updateProduct(submittedProduct as Product);
+        } else {
+          await addProduct(submittedProduct as Omit<Product, 'id'>);
+        }
+        setIsDialogOpen(false);
+        setProductToEdit(null);
+    } catch (error) {
+        // Error toast is handled in the context, so no need to show another one here.
+        console.error("Failed to submit product:", error);
     }
-    setIsDialogOpen(false);
-    setProductToEdit(null);
   };
 
   return (
