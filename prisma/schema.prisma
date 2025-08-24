@@ -1,24 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
 
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
 
-generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
-}
-
 model Product {
-  id                String   @id @default(cuid())
+  id                String  @id @default(cuid())
   name              String
-  sku               String   @unique
+  sku               String? @unique
   category          String
   stock             Int
   price             Float
+  lowStockThreshold Int
   cost              Float
   minPrice          Float
-  lowStockThreshold Int
   supplier          String?
   description       String?
   imageUrl          String?
@@ -27,12 +29,18 @@ model Product {
   saleItems         SaleItem[]
 }
 
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  role     String // Admin, Manager, Staff
+}
+
 model Sale {
   id            String     @id @default(cuid())
+  date          DateTime   @default(now())
   customerName  String
   total         Float
   paymentMethod String
-  createdAt     DateTime   @default(now())
   items         SaleItem[]
 }
 
@@ -53,7 +61,7 @@ model Layaway {
   productName     String
   totalAmount     Float
   amountPaid      Float
-  status          String // "Pending", "Paid", "Cancelled"
+  status          String // Pending, Paid, Cancelled
   lastPaymentDate DateTime
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -64,21 +72,15 @@ model Payment {
   id        String   @id @default(cuid())
   layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
   layawayId String
-  amount    Float
-  method    String
   date      DateTime @default(now())
+  amount    Float
+  method    String // Cash, M-Pesa, Card
 }
 
 model AuditLog {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
   user      String
   action    String
   details   String
-  timestamp DateTime @default(now())
-}
-
-model User {
-  id       String @id @default(cuid())
-  username String @unique
-  role     String // "Admin", "Manager", "Staff"
 }

@@ -63,7 +63,7 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: productToEdit || {
+    defaultValues: productToEdit ? { ...productToEdit } : {
       name: '',
       sku: '',
       category: '',
@@ -98,24 +98,26 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
 
 
   React.useEffect(() => {
-    if (productToEdit) {
-      form.reset(productToEdit);
-      setImagePreview(productToEdit.imageUrl || null);
-    } else {
-      form.reset({
-        name: '',
-        sku: '',
-        category: '',
-        stock: 0,
-        price: 0,
-        lowStockThreshold: 5,
-        cost: 0,
-        minPrice: 0,
-        supplier: '',
-        description: '',
-        imageUrl: '',
-      });
-      setImagePreview(null);
+    if (isOpen) {
+        if (productToEdit) {
+            form.reset(productToEdit);
+            setImagePreview(productToEdit.imageUrl || null);
+        } else {
+            form.reset({
+                name: '',
+                sku: '',
+                category: '',
+                stock: 0,
+                price: 0,
+                lowStockThreshold: 5,
+                cost: 0,
+                minPrice: 0,
+                supplier: '',
+                description: '',
+                imageUrl: '',
+            });
+            setImagePreview(null);
+        }
     }
   }, [productToEdit, form, isOpen]);
 
@@ -324,5 +326,3 @@ export function AddProductDialog({ isOpen, onOpenChange, onProductSubmit, produc
     </Dialog>
   );
 }
-
-    

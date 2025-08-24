@@ -134,7 +134,7 @@ export async function createLayaway(layawayData: Omit<Layaway, 'id'|'lastPayment
             data: {
                 layawayId: newLayaway.id,
                 amount: newLayaway.amountPaid,
-                method: 'Initial Deposit', // or pass from client
+                method: 'Initial Deposit',
             }
         });
     }
