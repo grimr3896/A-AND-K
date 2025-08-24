@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/chart';
 
 type TopSellingProductsChartProps = {
-    data: { name: string; revenue: number }[];
+    data: { name: string; totalRevenue: number }[];
 }
 
 export function TopSellingProductsChart({ data }: TopSellingProductsChartProps) {
@@ -28,7 +28,7 @@ export function TopSellingProductsChart({ data }: TopSellingProductsChartProps) 
         margin={{ top: 5, right: 20, left: 30, bottom: 5 }}
       >
         <CartesianGrid horizontal={false} />
-        <XAxis type="number" dataKey="revenue" tickFormatter={(value) => `KSh ${Number(value) / 1000}k`} />
+        <XAxis type="number" dataKey="totalRevenue" tickFormatter={(value) => `KSh ${Number(value) / 1000}k`} />
         <YAxis
           dataKey="name"
           type="category"
@@ -40,11 +40,14 @@ export function TopSellingProductsChart({ data }: TopSellingProductsChartProps) 
         <Tooltip
           cursor={{ fill: 'hsl(var(--muted))' }}
           content={<ChartTooltipContent
-             formatter={(value) => `KSh ${Number(value).toLocaleString()}`}
+             formatter={(value, name) => {
+                if (name === "totalRevenue") return `KSh ${Number(value).toLocaleString()}`;
+                return String(value);
+             }}
              indicator="dot"
           />}
         />
-        <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="totalRevenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ChartContainer>
   );

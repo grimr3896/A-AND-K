@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Product as PrismaProduct, Sale as PrismaSale, SaleItem as PrismaSaleItem, Layaway as PrismaLayaway, Payment as PrismaPayment, AuditLog as PrismaAuditLog } from '@prisma/client';
 
 export type Product = PrismaProduct;
-export type Sale = PrismaSale & { items: PrismaSaleItem[] };
+export type Sale = PrismaSale & { items: (PrismaSaleItem & { product?: PrismaProduct })[] };
 export type Layaway = PrismaLayaway;
 export type Payment = PrismaPayment;
 export type AuditLog = PrismaAuditLog;
@@ -66,3 +66,14 @@ export const EmailReportOutputSchema = z.object({
   htmlBody: z.string().describe("The full HTML content of the email report."),
 });
 export type EmailReportOutput = z.infer<typeof EmailReportOutputSchema>;
+
+// Types for Dashboard Stats
+export type DashboardStats = {
+    totalRevenue: number;
+    totalTransactions: number;
+    averageTransactionValue: number;
+    monthlyRevenue: number;
+    salesTrend: { date: string; sales: number }[];
+    salesByCategory: { category: string; sales: number }[];
+    topSellingProducts: { name: string; totalRevenue: number }[];
+};

@@ -15,7 +15,6 @@ type SalesDataPoint = {
 
 type SalesTrendChartProps = {
     data: SalesDataPoint[];
-    dateKey: "date" | "month" | "year";
 }
 
 const chartConfig = {
@@ -25,7 +24,14 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function SalesTrendChart({ data, dateKey }: SalesTrendChartProps) {
+export function SalesTrendChart({ data }: SalesTrendChartProps) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-[300px] w-full text-muted-foreground">
+                No sales data for this period.
+            </div>
+        );
+    }
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
       <LineChart
@@ -35,10 +41,15 @@ export function SalesTrendChart({ data, dateKey }: SalesTrendChartProps) {
       >
         <CartesianGrid vertical={false} />
         <XAxis
-          dataKey={dateKey}
+          dataKey="date"
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          tickFormatter={(value) => {
+            // Basic check to format date differently based on potential granularity
+            if (String(value).includes('-')) return value; // Assumes YYYY-MM-DD or similar
+            return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }}
         />
         <Tooltip
           content={<ChartTooltipContent

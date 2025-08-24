@@ -17,12 +17,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { mockSales, mockProducts } from '@/lib/mock-data';
 import { SalesTrendChart } from './_components/sales-trend-chart';
 import { TopSellingProductsChart } from './_components/top-selling-products-chart';
 import { SalesByCategoryChart } from './_components/sales-by-category-chart';
-import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format, subDays } from 'date-fns';
+import { getDashboardStats } from '@/lib/actions';
+import type { DashboardStats } from '@/lib/types';
 import type { ChartConfig } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type DateRange = 'today' | 'this-week' | 'this-month' | 'this-year';
 
@@ -40,87 +41,31 @@ const categoryChartConfig = Object.keys(categoryColors).reduce((acc, key) => {
 }, {} as ChartConfig);
 
 
-export default function Dashboard() {
-  const [dateRange, setDateRange] = React.useState<DateRange>('this-month');
+function DashboardClient({ initialStats, dateRange: initialDateRange }: { initialStats: DashboardStats | null, dateRange: DateRange }) {
+  const [stats, setStats] = React.useState(initialStats);
+  const [dateRange, setDateRange] = React.useState<DateRange>(initialDateRange);
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const filteredSalesData = React.useMemo(() => {
-    const now = new Date();
-    let interval;
-    switch (dateRange) {
-        case 'today':
-            interval = { start: new Date(now.setHours(0,0,0,0)), end: new Date(now.setHours(23,59,59,999)) };
-            break;
-        case 'this-week':
-            interval = { start: startOfWeek(now), end: endOfWeek(now) };
-            break;
-        case 'this-month':
-            interval = { start: startOfMonth(now), end: endOfMonth(now) };
-            break;
-        case 'this-year':
-             interval = { start: startOfYear(now), end: endOfYear(now) };
-             break;
-        default:
-             interval = { start: startOfMonth(now), end: endOfMonth(now) };
+  React.useEffect(() => {
+    const fetchStats = async () => {
+        setIsLoading(true);
+        const newStats = await getDashboardStats(dateRange);
+        setStats(newStats);
+        setIsLoading(false);
     }
-    return mockSales.filter(sale => isWithinInterval(new Date(sale.date), interval));
+    fetchStats();
   }, [dateRange]);
 
-  // --- KPI Calculations (based on filtered data) ---
-    const totalRevenue = filteredSalesData.reduce((acc, sale) => acc + sale.total, 0);
-    const totalTransactions = filteredSalesData.length;
-    const averageTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
-    
-    // Monthly target is independent of the filter
-    const monthlyRevenue = mockSales
-        .filter(sale => isWithinInterval(new Date(sale.date), {start: startOfMonth(new Date()), end: endOfMonth(new Date())}))
-        .reduce((acc, sale) => acc + sale.total, 0);
-    const monthlyTarget = 500000;
-    const monthlyProgress = (monthlyRevenue / monthlyTarget) * 100;
-
-  const salesTrendChartData = React.useMemo(() => {
-     const dataMap = new Map<string, number>();
-     let dateFormat = "MMM d";
-     if (dateRange === 'this-year') dateFormat = "MMM";
-
-     filteredSalesData.forEach(sale => {
-         const key = format(new Date(sale.date), dateFormat);
-         dataMap.set(key, (dataMap.get(key) || 0) + sale.total);
-     });
-
-     return Array.from(dataMap.entries()).map(([date, sales]) => ({ date, sales })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [filteredSalesData, dateRange]);
-
   const salesByCategoryData = React.useMemo(() => {
-    const categorySales = new Map<string, number>();
-    filteredSalesData.forEach(sale => {
-        sale.items.forEach(item => {
-            const product = mockProducts.find(p => p.id === item.productId);
-            if(product) {
-                categorySales.set(product.category, (categorySales.get(product.category) || 0) + (item.price * item.quantity));
-            }
-        });
-    });
-    return Array.from(categorySales.entries()).map(([category, sales]) => ({
-        category,
-        sales,
-        fill: categoryColors[category] || 'hsl(var(--muted))'
+    if (!stats) return [];
+    return stats.salesByCategory.map(item => ({
+        ...item,
+        fill: categoryColors[item.category] || 'hsl(var(--muted))'
     }));
-  }, [filteredSalesData]);
-
-  const topSellingProductsData = React.useMemo(() => {
-      const productSales = new Map<string, { name: string; revenue: number }>();
-      filteredSalesData.forEach(sale => {
-        sale.items.forEach(item => {
-            const current = productSales.get(item.productId) || { name: item.name, revenue: 0 };
-            current.revenue += item.price * item.quantity;
-            productSales.set(item.productId, current);
-        });
-      });
-      return Array.from(productSales.values())
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 6);
-  }, [filteredSalesData]);
-
+  }, [stats]);
+  
+  const monthlyTarget = 500000;
+  const monthlyProgress = stats ? (stats.monthlyRevenue / monthlyTarget) * 100 : 0;
 
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8">
@@ -128,7 +73,7 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <h1 className="text-2xl font-bold">Executive Dashboard</h1>
         <div className="flex items-center gap-2 ml-auto">
-           <Select value={dateRange} onValueChange={(value) => setDateRange(value as DateRange)}>
+           <Select value={dateRange} onValueChange={(value) => setDateRange(value as DateRange)} disabled={isLoading}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select date range" />
             </SelectTrigger>
@@ -150,7 +95,7 @@ export default function Dashboard() {
             <CardDescription>For the selected period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">KSh {totalRevenue.toLocaleString()}</div>
+            {isLoading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-3xl font-bold">KSh {stats?.totalRevenue.toLocaleString() || 0}</div>}
           </CardContent>
         </Card>
         <Card>
@@ -159,7 +104,7 @@ export default function Dashboard() {
              <CardDescription>Target: KSh {monthlyTarget.toLocaleString()}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{monthlyProgress.toFixed(1)}%</div>
+            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-3xl font-bold">{monthlyProgress.toFixed(1)}%</div>}
             <Progress value={monthlyProgress} className="mt-2 h-2" />
           </CardContent>
         </Card>
@@ -169,7 +114,7 @@ export default function Dashboard() {
              <CardDescription>For the selected period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">KSh {averageTransactionValue.toFixed(2)}</div>
+             {isLoading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-3xl font-bold">KSh {stats?.averageTransactionValue.toFixed(2) || '0.00'}</div>}
           </CardContent>
         </Card>
         <Card>
@@ -178,7 +123,7 @@ export default function Dashboard() {
             <CardDescription>For the selected period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalTransactions}</div>
+            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-3xl font-bold">{stats?.totalTransactions || 0}</div>}
           </CardContent>
         </Card>
       </div>
@@ -186,17 +131,10 @@ export default function Dashboard() {
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-5">
         <Card className="xl:col-span-3">
           <CardHeader>
-            <CardTitle>
-                {
-                    dateRange === 'today' ? 'Today\'s Sales Trend' :
-                    dateRange === 'this-week' ? 'Weekly Sales Trend' :
-                    dateRange === 'this-month' ? 'Monthly Sales Trend' :
-                    dateRange === 'this-year' ? 'Yearly Sales Trend' : 'Sales Trend'
-                }
-            </CardTitle>
+            <CardTitle>Sales Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <SalesTrendChart data={salesTrendChartData} dateKey="date" />
+            {isLoading ? <Skeleton className="h-[300px] w-full" /> : <SalesTrendChart data={stats?.salesTrend || []} />}
           </CardContent>
         </Card>
         <Card className="xl:col-span-2">
@@ -204,7 +142,7 @@ export default function Dashboard() {
                 <CardTitle>Sales by Category</CardTitle>
             </CardHeader>
             <CardContent>
-                <SalesByCategoryChart data={salesByCategoryData} chartConfig={categoryChartConfig}/>
+                {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SalesByCategoryChart data={salesByCategoryData} chartConfig={categoryChartConfig}/>}
             </CardContent>
         </Card>
       </div>
@@ -217,9 +155,48 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <TopSellingProductsChart data={topSellingProductsData} />
+            {isLoading ? <Skeleton className="h-[350px] w-full" /> : <TopSellingProductsChart data={stats?.topSellingProducts || []} />}
           </CardContent>
       </Card>
     </div>
   );
+}
+
+
+export default function DashboardPage() {
+    const [stats, setStats] = React.useState<DashboardStats | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+    
+    React.useEffect(() => {
+        getDashboardStats('this-month').then(data => {
+            setStats(data);
+            setIsLoading(false);
+        });
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-1 flex-col gap-4 md:gap-8">
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <h1 className="text-2xl font-bold">Executive Dashboard</h1>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <Skeleton className="h-10 w-[180px]" />
+                    </div>
+                </div>
+                 <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+                    <Card><CardHeader><Skeleton className="h-5 w-24" /><Skeleton className="h-4 w-32 mt-1" /></CardHeader><CardContent><Skeleton className="h-8 w-3/4" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-5 w-24" /><Skeleton className="h-4 w-32 mt-1" /></CardHeader><CardContent><Skeleton className="h-8 w-1/4" /><Skeleton className="h-2 w-full mt-2" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-5 w-24" /><Skeleton className="h-4 w-32 mt-1" /></CardHeader><CardContent><Skeleton className="h-8 w-3/4" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-5 w-24" /><Skeleton className="h-4 w-32 mt-1" /></CardHeader><CardContent><Skeleton className="h-8 w-1/4" /></CardContent></Card>
+                </div>
+                <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-5">
+                    <Card className="xl:col-span-3"><CardHeader><Skeleton className="h-6 w-48" /></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+                    <Card className="xl:col-span-2"><CardHeader><Skeleton className="h-6 w-48" /></CardHeader><CardContent><Skeleton className="h-[350px] w-full" /></CardContent></Card>
+                </div>
+                <Card className="col-span-full"><CardHeader><Skeleton className="h-6 w-48" /><Skeleton className="h-4 w-64 mt-1" /></CardHeader><CardContent><Skeleton className="h-[350px] w-full" /></CardContent></Card>
+            </div>
+        );
+    }
+
+    return <DashboardClient initialStats={stats} dateRange="this-month" />;
 }
