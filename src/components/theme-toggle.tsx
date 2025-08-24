@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Moon, Sun } from "lucide-react";
@@ -9,6 +10,7 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
+    // This code now runs only on the client, after the component has mounted.
     const savedTheme = localStorage.getItem("theme");
     // If no theme is saved, check system preference
     const initialTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -31,6 +33,7 @@ export function ThemeToggle() {
   };
 
   if (!mounted) {
+    // Render a placeholder on the server and during initial client render
     return (
         <Button variant="ghost" size="icon" disabled={true} className="w-9 h-9">
             <Sun className="h-[1.2rem] w-[1.2rem]" />

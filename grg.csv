@@ -1,0 +1,7 @@
+import csv
+
+# Create an empty CSV file named grg.csv
+with open('grg.csv', 'w', newline='') as csvfile:
+    pass
+
+print("Empty CSV file 'grg.csv' created successfully.")
