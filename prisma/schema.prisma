@@ -8,30 +8,22 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id       String   @id @default(cuid())
-  username String   @unique
-  role     String
-  createdAt DateTime @default(now())
-}
-
 model Product {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   name              String
-  sku               String?  @unique
+  sku               String?
   category          String
   stock             Int
   price             Float
-  lowStockThreshold Int      @default(5)
+  lowStockThreshold Int
   cost              Float
   minPrice          Float
   supplier          String?
   description       String?
   imageUrl          String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  saleItems SaleItem[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  saleItems         SaleItem[]
 }
 
 model Sale {
@@ -45,10 +37,10 @@ model Sale {
 
 model SaleItem {
   id        String   @id @default(cuid())
-  sale      Sale     @relation(fields: [saleId], references: [id])
   saleId    String
-  product   Product  @relation(fields: [productId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id])
   productId String
+  product   Product  @relation(fields: [productId], references: [id])
   name      String
   quantity  Int
   price     Float
@@ -60,24 +52,24 @@ model Layaway {
   productName     String
   totalAmount     Float
   amountPaid      Float
-  status          String
-  lastPaymentDate DateTime  @default(now())
+  status          String // Pending, Paid, Cancelled
+  lastPaymentDate DateTime
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   payments        Payment[]
 }
 
 model Payment {
-  id         String   @id @default(cuid())
-  layaway    Layaway  @relation(fields: [layawayId], references: [id])
-  layawayId  String
-  date       DateTime @default(now())
-  amount     Float
-  method     String
+  id        String   @id @default(cuid())
+  layawayId String
+  layaway   Layaway  @relation(fields: [layawayId], references: [id])
+  date      DateTime @default(now())
+  amount    Float
+  method    String // Cash, M-Pesa, Card
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
   user      String
   action    String
