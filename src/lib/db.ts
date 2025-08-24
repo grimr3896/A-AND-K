@@ -15,8 +15,16 @@ const prismaClientSingleton = () => {
   if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
     // This is where the database will live in a packaged desktop app.
     // It ensures each user has their own database in their local app data folder.
-    const userDataPath = os.homedir(); // Simplified for cross-platform compatibility. A real app might use a library for this.
-    const appDataPath = path.join(userDataPath, '.ak-babyshop');
+    let userDataPath: string;
+    if (process.platform === 'win32' && process.env.APPDATA) {
+      // Use %APPDATA% on Windows for user-specific app data
+      userDataPath = process.env.APPDATA;
+    } else {
+      // Fallback for other systems (macOS, Linux)
+      userDataPath = os.homedir();
+    }
+    
+    const appDataPath = path.join(userDataPath, 'AK-Babyshop-Data');
 
     // Ensure the directory exists
     if (!fs.existsSync(appDataPath)) {
