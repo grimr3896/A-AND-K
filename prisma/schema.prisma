@@ -9,9 +9,9 @@ generator client {
 }
 
 model Product {
-  id                String    @id @default(cuid())
-  name              String
-  sku               String?
+  id                String  @id @default(cuid())
+  name              String  @unique
+  sku               String? @unique
   category          String
   stock             Int
   price             Float
@@ -20,27 +20,23 @@ model Product {
   minPrice          Float
   supplier          String?
   description       String?
-  imageUrl          String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  saleItems         SaleItem[]
+  imageUrl          String? @default("https://placehold.co/150x150.png")
 }
 
 model Sale {
-  id            String     @id @default(cuid())
-  date          DateTime   @default(now())
+  id            String    @id @default(cuid())
+  date          DateTime  @default(now())
   customerName  String
-  items         SaleItem[]
   total         Float
   paymentMethod String
+  items         SaleItem[]
 }
 
 model SaleItem {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
-  sale      Sale     @relation(fields: [saleId], references: [id])
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
   name      String
   quantity  Int
   price     Float
@@ -52,24 +48,23 @@ model Layaway {
   productName     String
   totalAmount     Float
   amountPaid      Float
-  status          String // Pending, Paid, Cancelled
-  lastPaymentDate DateTime
+  status          String // e.g., 'Pending', 'Paid', 'Cancelled'
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  lastPaymentDate DateTime
   payments        Payment[]
 }
 
 model Payment {
   id        String   @id @default(cuid())
+  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
   layawayId String
-  layaway   Layaway  @relation(fields: [layawayId], references: [id])
   date      DateTime @default(now())
   amount    Float
-  method    String // Cash, M-Pesa, Card
+  method    String // e.g., 'Cash', 'M-Pesa', 'Card'
 }
 
 model AuditLog {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   timestamp DateTime @default(now())
   user      String
   action    String
