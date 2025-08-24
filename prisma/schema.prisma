@@ -1,11 +1,14 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Product {
@@ -28,22 +31,22 @@ model Product {
 
 model Sale {
   id            String    @id @default(cuid())
+  date          DateTime  @default(now())
   customerName  String
   total         Float
   paymentMethod String
-  createdAt     DateTime  @default(now())
   items         SaleItem[]
 }
 
 model SaleItem {
   id        String  @id @default(cuid())
   saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   productId String
+  product   Product @relation(fields: [productId], references: [id])
   name      String
   quantity  Int
   price     Float
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 }
 
 model Layaway {
@@ -62,16 +65,16 @@ model Layaway {
 model Payment {
   id        String   @id @default(cuid())
   layawayId String
+  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
   amount    Float
   method    String
-  date      DateTime @default(now())
-  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  user      String
-  action    String
-  details   String
-  createdAt DateTime @default(now())
+  id      String   @id @default(cuid())
+  user    String
+  action  String
+  details String
+  date    DateTime @default(now())
 }
