@@ -22,7 +22,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
-import { getAdminPassword } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
 import { AddProductDialog } from './_components/add-product-dialog';
 import Image from 'next/image';
@@ -39,10 +38,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useProducts } from '@/contexts/products-context';
+import { useBusinessInfo } from '@/contexts/business-info-context';
 
 
 export default function InventoryPage() {
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { getPassword } = useBusinessInfo();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [productToEdit, setProductToEdit] = React.useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
@@ -55,7 +56,7 @@ export default function InventoryPage() {
   const { toast } = useToast();
 
   const handlePasswordSubmit = () => {
-    if (passwordInput === getAdminPassword()) {
+    if (passwordInput === getPassword()) {
       setPasswordPrompt(false);
       setPasswordInput('');
       actionToConfirm?.();
@@ -128,7 +129,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <>
+    <BusinessInfoProvider>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -253,6 +254,6 @@ export default function InventoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </BusinessInfoProvider>
   );
 }

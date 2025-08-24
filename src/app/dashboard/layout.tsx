@@ -41,8 +41,9 @@ import { BusinessInfoProvider } from '@/contexts/business-info-context';
 import { usePathname } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 
-const protectedRoutesWithApiKey = [
+const protectedRoutes = [
   '/dashboard/ai-suggestions',
+  '/dashboard/email',
 ];
 
 export default function DashboardLayout({
@@ -64,8 +65,8 @@ export default function DashboardLayout({
     { href: '/dashboard/reports', label: 'Reports', icon: AreaChart, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/profit-analysis', label: 'Profit Analysis', icon: TrendingUp, roles: ['Admin'], isLocked: true },
     { href: '/dashboard/ai-suggestions', label: 'AI Suggestions', icon: Cpu, roles: ['Admin'] },
-    { href: '/dashboard/email', label: 'Email Reports', icon: Mail, roles: ['Admin'], isLocked: true },
-    { href: '/dashboard/business-info', label: 'Business Info', icon: Settings, roles: ['Admin'], isLocked: true },
+    { href: '/dashboard/email', label: 'Email Reports', icon: Mail, roles: ['Admin'] },
+    { href: '/dashboard/business-info', label: 'Business Info', icon: Settings, roles: ['Admin'] },
   ];
 
   const accessibleLinks = navLinks.filter(link => hasRole(link.roles as any));
@@ -84,7 +85,7 @@ export default function DashboardLayout({
     return null;
   }
   
-  const isProtectedRoute = protectedRoutesWithApiKey.includes(pathname);
+  const isProtectedRoute = protectedRoutes.includes(pathname);
 
   return (
     <BusinessInfoProvider>

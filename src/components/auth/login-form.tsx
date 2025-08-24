@@ -18,17 +18,19 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { mockUsers, getAdminPassword } from '@/lib/mock-data';
+import { mockUsers } from '@/lib/mock-data';
+import { useBusinessInfo, BusinessInfoProvider } from '@/contexts/business-info-context';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
-export function LoginForm() {
+function ActualLoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const { getPassword } = useBusinessInfo();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,16 +43,12 @@ export function LoginForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    // Simulate API call
     setTimeout(() => {
       const user = mockUsers.find(u => u.username.toLowerCase() === values.username.toLowerCase());
       
-      // In a real app, password would come from a secure source. Here we simulate it.
-      // The `getAdminPassword` is now a placeholder as the real password management is in the context.
-      const correctPassword = localStorage.getItem('adminPassword') || getAdminPassword();
+      const correctPassword = getPassword();
 
       if (user && values.password === correctPassword) {
-        // In a real app, you'd use a more secure session management system.
         localStorage.setItem('loggedInUser', JSON.stringify(user));
         toast({
           title: 'Login Successful',
@@ -104,4 +102,13 @@ export function LoginForm() {
       </form>
     </Form>
   );
+}
+
+
+export function LoginForm() {
+    return (
+        <BusinessInfoProvider>
+            <ActualLoginForm />
+        </BusinessInfoProvider>
+    )
 }

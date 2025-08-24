@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
-import { getAdminPassword as getDefaultPassword } from '@/lib/mock-data';
 
 export function useAuth() {
   const [user, setUser] = React.useState<User | null>(null);
@@ -12,15 +11,20 @@ export function useAuth() {
   const router = useRouter();
 
   React.useEffect(() => {
-    // This effect should only run on the client-side
-    if (typeof window !== 'undefined') {
+    try {
       const storedUser = localStorage.getItem('loggedInUser');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
-      } else {
+      } else if (window.location.pathname !== '/') {
         router.push('/');
       }
-      setIsLoading(false);
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      if (window.location.pathname !== '/') {
+        router.push('/');
+      }
+    } finally {
+        setIsLoading(false);
     }
   }, [router]);
 
@@ -28,18 +32,6 @@ export function useAuth() {
     if (isLoading || !user) return false;
     return roles.includes(user.role);
   };
-  
-  const hasValidApiKey = () => {
-    if (typeof window !== 'undefined') {
-        const storedApiKey = localStorage.getItem('apiKey');
-        // TEST: Temporarily consider the default key as invalid for testing purposes
-        if (!storedApiKey || storedApiKey.startsWith('ak_xxxx')) {
-            return false;
-        }
-        return true;
-    }
-    return false;
-  }
 
   const logout = () => {
     localStorage.removeItem('loggedInUser');
@@ -47,5 +39,5 @@ export function useAuth() {
     router.push('/');
   };
 
-  return { user, hasRole, logout, isLoading, hasValidApiKey };
+  return { user, hasRole, logout, isLoading };
 }
