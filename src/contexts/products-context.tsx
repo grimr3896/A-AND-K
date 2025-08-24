@@ -19,6 +19,11 @@ const ProductsContext = React.createContext<ProductsContextType | undefined>(und
 export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = React.useState<Product[]>(initialProducts);
 
+  React.useEffect(() => {
+    // This could be where you fetch from a database in a real app
+    setProducts(initialProducts);
+  }, []);
+
   const addProduct = (product: Omit<Product, 'id'>) => {
     setProducts(prev => [
       ...prev,

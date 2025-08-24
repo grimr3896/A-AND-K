@@ -29,33 +29,17 @@ export function BusinessInfoProvider({ children }: { children: React.ReactNode }
   });
   
   // Use localStorage to persist sensitive info, falling back to mock data if not present.
-  const [password, setInternalPassword] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-        return localStorage.getItem('adminPassword') || getDefaultPassword();
-    }
-    return getDefaultPassword();
-  });
+  const [password, setInternalPassword] = React.useState(getDefaultPassword());
+  const [resendApiKey, setInternalResendApiKey] = React.useState('re_xxxxxxxx_xxxxxxxx');
+  const [fromEmail, setInternalFromEmail] = React.useState('onboarding@resend.dev');
+  const [recipientEmail, setInternalRecipientEmail] = React.useState('delivered@resend.dev');
 
-  const [resendApiKey, setInternalResendApiKey] = React.useState(() => {
-     if (typeof window !== 'undefined') {
-        return localStorage.getItem('resendApiKey') || 're_xxxxxxxx_xxxxxxxx';
-     }
-     return 're_xxxxxxxx_xxxxxxxx';
-  });
-  
-  const [fromEmail, setInternalFromEmail] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-       return localStorage.getItem('fromEmail') || 'onboarding@resend.dev';
-    }
-    return 'onboarding@resend.dev';
- });
-
- const [recipientEmail, setInternalRecipientEmail] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-       return localStorage.getItem('recipientEmail') || 'delivered@resend.dev';
-    }
-    return 'delivered@resend.dev';
- });
+  React.useEffect(() => {
+    setInternalPassword(localStorage.getItem('adminPassword') || getDefaultPassword());
+    setInternalResendApiKey(localStorage.getItem('resendApiKey') || 're_xxxxxxxx_xxxxxxxx');
+    setInternalFromEmail(localStorage.getItem('fromEmail') || 'onboarding@resend.dev');
+    setInternalRecipientEmail(localStorage.getItem('recipientEmail') || 'delivered@resend.dev');
+  }, []);
 
   // When sensitive info changes, update localStorage
   React.useEffect(() => {
@@ -110,5 +94,3 @@ export function useBusinessInfo() {
   }
   return context;
 }
-
-    
