@@ -11,9 +11,15 @@ export const setAdminPassword = (newPassword: string) => {
   return true;
 };
 
-// Default API key
-export const getApiKey = () => "ak_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+export const mockUsers: User[] = [
+    { id: 'USER001', username: 'A&Kbabyshop', role: 'Admin' },
+    { id: 'USER002', username: 'manager', role: 'Manager' },
+    { id: 'USER003', username: 'staff', role: 'Staff' },
+];
 
+// --- Deprecated Mock Data ---
+// This data is no longer actively used by the application but is kept for reference 
+// or potential fallback testing. The app now uses a Prisma database.
 
 export const mockProducts: Product[] = [
   // Clothes
@@ -55,23 +61,6 @@ export const mockLayaways: Layaway[] = [
   { id: 'LAY004', customerName: 'Ian Malcolm', productName: 'Soft Sole Leather Baby Shoes', totalAmount: 2200, amountPaid: 1000, status: 'Pending', lastPaymentDate: '2024-07-18' },
 ];
 
-export const mockCustomers: Customer[] = [
-  { id: 'CUST001', name: 'Jane Doe', phone: '555-0101', email: 'jane.doe@example.com', purchaseHistory: [mockSales[0]] },
-  { id: 'CUST002', name: 'John Smith', phone: '555-0102', email: 'john.smith@example.com', purchaseHistory: [mockSales[1]] },
-  { id: 'CUST003', name: 'Alice Johnson', phone: '555-0103', email: 'alice.j@example.com', purchaseHistory: [mockSales[2]] },
-  { id: 'CUST004', name: 'Bob Williams', phone: '555-0104', email: 'bob.w@example.com', purchaseHistory: [mockSales[3]] },
-  { id: 'CUST005', name: 'Charlie Brown', phone: '555-0105', email: 'charlie.b@example.com', purchaseHistory: [mockSales[4]] },
-];
-
-export const mockAuditLogs: AuditLog[] = [
-  { id: 'LOG001', timestamp: '2024-07-22T09:05:14Z', user: 'Admin', action: 'Product Added', details: 'Added "Organic Cotton Onesie (3-pack)" (PROD001)' },
-  { id: 'LOG002', timestamp: '2024-07-22T10:30:00Z', user: 'Staff', action: 'Sale Processed', details: 'Sale ID: SALE001, Total: 3200' },
-  { id: 'LOG003', timestamp: '2024-07-22T11:15:21Z', user: 'Manager', action: 'Stock Updated', details: 'Updated stock for "Knit Baby Booties" (PROD003) to 58' },
-  { id: 'LOG004', timestamp: '2024-07-23T14:00:00Z', user: 'Admin', action: 'User Edit', details: 'Changed role for user: staff' },
-  { id: 'LOG005', timestamp: '2024-07-24T10:00:00Z', user: 'Admin', action: 'API Key Generated', details: 'New API key generated for Reporting service.' },
-  { id: 'LOG006', timestamp: '2024-07-24T11:00:00Z', user: 'Manager', action: 'Layaway Created', details: 'New layaway plan LAY003 created for Hannah Abbott.' },
-];
-
 export const salesDataForAI = JSON.stringify([
   {"date": "2024-07-01", "productId": "PROD001", "quantity": 5},
   {"date": "2024-07-05", "productId": "PROD004", "quantity": 15},
@@ -85,10 +74,3 @@ export const productDetailsForAI = JSON.stringify(mockProducts.map(p => ({
   currentStock: p.stock,
   category: p.category,
 })), null, 2);
-
-
-export const mockUsers: User[] = [
-    { id: 'USER001', username: 'A&Kbabyshop', role: 'Admin' },
-    { id: 'USER002', username: 'manager', role: 'Manager' },
-    { id: 'USER003', username: 'staff', role: 'Staff' },
-];

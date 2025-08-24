@@ -29,6 +29,7 @@ import { Receipt } from './receipt';
 import { useProducts } from '@/contexts/products-context';
 import Image from 'next/image';
 import { useBusinessInfo } from '@/contexts/business-info-context';
+import { useAuth } from '@/hooks/use-auth';
 
 type AgreementItem = {
     id:string;
@@ -60,8 +61,10 @@ export default function POSPageClient() {
     const { toast } = useToast();
     const { products, handleCheckout: processCheckout } = useProducts();
     const { businessInfo } = useBusinessInfo();
+    const { user } = useAuth();
     const [cart, setCart] = React.useState<CartItem[]>([]);
     const [agreementTable, setAgreementTable] = React.useState<AgreementItem[]>([]);
+    const [customerName, setCustomerName] = React.useState('');
     const [amountReceived, setAmountReceived] = React.useState<number>(0);
     const [paymentMethod, setPaymentMethod] = React.useState<string>('Cash');
     const [completedSale, setCompletedSale] = React.useState<CompletedSale | null>(null);
@@ -92,7 +95,7 @@ export default function POSPageClient() {
                     category: product.category,
                     price: product.price,
                     minPrice: product.minPrice,
-                    imageUrl: product.imageUrl
+                    imageUrl: product.imageUrl || undefined
                 }]);
             } else {
                  toast({ variant: 'destructive', title: 'Out of Stock', description: `${product.name} is out of stock.` });
@@ -206,6 +209,7 @@ export default function POSPageClient() {
         setCart([]);
         setAgreementTable([]);
         setAmountReceived(0);
+        setCustomerName('');
         setPaymentMethod('Cash');
     }, []);
     
@@ -241,7 +245,11 @@ export default function POSPageClient() {
     };
 
 
-    const handleFinalCheckout = React.useCallback(() => {
+    const handleFinalCheckout = React.useCallback(async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In', description: 'You must be logged in to perform a checkout.' });
+            return;
+        }
         if(cart.length === 0) {
             toast({ variant: 'destructive', title: 'Cart Empty', description: 'Please add products to the cart.' });
             return;
@@ -251,7 +259,7 @@ export default function POSPageClient() {
             return;
         }
 
-        const saleData: CompletedSale = {
+        const saleDataForReceipt: CompletedSale = {
             cart,
             subtotal,
             tax,
@@ -261,17 +269,14 @@ export default function POSPageClient() {
             changeDue
         };
         
-        // This is where we update the central state
-        processCheckout(cart);
+        await processCheckout(cart, customerName, paymentMethod);
 
-        setCompletedSale(saleData);
+        setCompletedSale(saleDataForReceipt);
         setIsReceiptOpen(true);
 
-        // In a real app, you would also save the sale to a database here.
-        console.log("Sale Saved:", saleData);
-
+        toast({ title: 'Checkout Complete', description: 'Sale has been recorded and stock updated.' });
         resetSale();
-    }, [cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue, processCheckout, toast, resetSale]);
+    }, [user, cart, subtotal, tax, total, paymentMethod, amountReceived, changeDue, processCheckout, toast, resetSale, customerName]);
 
     const handleSuspend = React.useCallback(() => {
         if(cart.length === 0) {
@@ -486,6 +491,14 @@ export default function POSPageClient() {
                             </div>
                             <Separator />
                              <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium">Customer Name (Optional)</label>
+                                    <Input
+                                        placeholder="Enter customer name for record"
+                                        value={customerName}
+                                        onChange={(e) => setCustomerName(e.target.value)}
+                                    />
+                                </div>
                                 <div>
                                     <label className="text-sm font-medium">Amount Received</label>
                                     <Input 

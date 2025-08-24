@@ -1,21 +1,12 @@
 
-
 import { z } from 'zod';
+import type { Product as PrismaProduct, Sale as PrismaSale, SaleItem as PrismaSaleItem, Layaway as PrismaLayaway, Payment as PrismaPayment, AuditLog as PrismaAuditLog } from '@prisma/client';
 
-export type Product = {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  stock: number;
-  price: number;
-  lowStockThreshold: number;
-  cost: number;
-  minPrice: number;
-  imageUrl?: string;
-  supplier?: string;
-  description?: string;
-};
+export type Product = PrismaProduct;
+export type Sale = PrismaSale & { items: PrismaSaleItem[] };
+export type Layaway = PrismaLayaway;
+export type Payment = PrismaPayment;
+export type AuditLog = PrismaAuditLog;
 
 export type CartItem = {
   id: string;
@@ -29,45 +20,12 @@ export type CartItem = {
   imageUrl?: string;
 };
 
-export type Sale = {
-  id: string;
-  date: string;
-  customerName: string;
-  items: { productId: string; name: string; quantity: number; price: number }[];
-  total: number;
-  paymentMethod: 'Cash' | 'M-Pesa' | 'Card';
-};
-
 export type Customer = {
   id: string;
   name: string;
   phone: string;
   email: string;
   purchaseHistory: Sale[];
-};
-
-export type Layaway = {
-  id: string;
-  customerName: string;
-  productName: string; // This can be a summary like "3 items"
-  totalAmount: number;
-  amountPaid: number;
-  status: 'Pending' | 'Paid' | 'Cancelled';
-  lastPaymentDate: string;
-};
-
-export type Payment = {
-    date: string;
-    amount: number;
-    method: 'Cash' | 'M-Pesa' | 'Card';
-}
-
-export type AuditLog = {
-  id: string;
-  timestamp: string;
-  user: string;
-  action: string;
-  details: string;
 };
 
 export type UserRole = 'Admin' | 'Manager' | 'Staff';

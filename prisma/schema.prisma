@@ -1,3 +1,4 @@
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -7,13 +8,13 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model Product {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   name              String
-  sku               String    @unique
+  sku               String   @unique
   category          String
   stock             Int
   price             Float
@@ -23,9 +24,9 @@ model Product {
   imageUrl          String?
   supplier          String?
   description       String?
-  sales             SaleItem[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  saleItems         SaleItem[]
 }
 
 model Sale {
@@ -40,21 +41,48 @@ model Sale {
 
 model SaleItem {
   id        String   @id @default(cuid())
-  sale      Sale     @relation(fields: [saleId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
   product   Product  @relation(fields: [productId], references: [id])
   productId String
+  name      String
   quantity  Int
-  price     Float // Price at the time of sale
+  price     Float // Price sold at
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+model Layaway {
+  id              String    @id @default(cuid())
+  customerName    String
+  productName     String
+  totalAmount     Float
+  amountPaid      Float
+  status          String // "Pending", "Paid", "Cancelled"
+  lastPaymentDate DateTime  @default(now())
+  payments        Payment[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+  layawayId String
+  amount    Float
+  method    String
+  date      DateTime @default(now())
 }
 
 model User {
-  id            String   @id @default(cuid())
-  username      String   @unique
-  passwordHash  String
-  role          String // e.g., 'Admin', 'Manager', 'Staff'
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id       String @id @default(cuid())
+  username String @unique
+  role     String // "Admin", "Manager", "Staff"
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  user      String
+  action    String
+  details   String
 }

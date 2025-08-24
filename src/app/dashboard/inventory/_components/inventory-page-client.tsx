@@ -21,7 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { AddProductDialog } from './add-product-dialog';
 import Image from 'next/image';
@@ -39,10 +39,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useProducts } from '@/contexts/products-context';
 import { useBusinessInfo } from '@/contexts/business-info-context';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function InventoryPageClient() {
-  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct, isLoading } = useProducts();
   const { getPassword } = useBusinessInfo();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [productToEdit, setProductToEdit] = React.useState<Product | null>(null);
@@ -52,7 +53,7 @@ export default function InventoryPageClient() {
   const [passwordInput, setPasswordInput] = React.useState('');
   const [actionToConfirm, setActionToConfirm] = React.useState<(() => void) | null>(null);
 
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const { toast } = useToast();
 
   const handlePasswordSubmit = () => {
@@ -107,22 +108,22 @@ export default function InventoryPageClient() {
     });
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if(productToDelete) {
-        deleteProduct(productToDelete.id);
+        await deleteProduct(productToDelete.id);
         toast({title: "Success", description: `Product "${productToDelete.name}" has been deleted.`});
         setIsDeleteAlertOpen(false);
         setProductToDelete(null);
     }
   }
   
-  const handleProductSubmit = (submittedProduct: Omit<Product, 'id'> | Product) => {
+  const handleProductSubmit = async (submittedProduct: Omit<Product, 'id'> | Product) => {
+    if (!user) return;
+    
     if ('id' in submittedProduct) {
-      // Edit existing product
-      updateProduct(submittedProduct);
+      await updateProduct(submittedProduct as Product);
     } else {
-      // Add new product
-      addProduct(submittedProduct);
+      await addProduct(submittedProduct as Omit<Product, 'id'>);
     }
     setIsDialogOpen(false);
     setProductToEdit(null);
@@ -165,7 +166,19 @@ export default function InventoryPageClient() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell className="hidden sm:table-cell"><Skeleton className="h-16 w-16 rounded-md" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-6 w-20 ml-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    </TableRow>
+                ))
+              ) : products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="hidden sm:table-cell">
                     <Image

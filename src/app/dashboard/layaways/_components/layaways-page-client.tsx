@@ -19,71 +19,59 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mockLayaways as initialLayaways } from '@/lib/mock-data';
 import type { Layaway } from '@/lib/types';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { AddLayawayDialog } from './add-layaway-dialog';
+import { createLayaway, getLayaways } from '@/lib/actions';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function LayawaysPageClient() {
-  const [layaways, setLayaways] = React.useState<Layaway[]>(initialLayaways);
+  const [layaways, setLayaways] = React.useState<Layaway[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const fetchLayaways = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const data = await getLayaways();
+        setLayaways(data as Layaway[]);
+    } catch (error) {
+        toast({variant: 'destructive', title: "Error", description: "Failed to fetch layaways."})
+    } finally {
+        setIsLoading(false);
+    }
+  }, [toast]);
 
   React.useEffect(() => {
-    try {
-      const newLayawaysData = sessionStorage.getItem('newLayaways');
-      if (newLayawaysData) {
-        const newLayaways = JSON.parse(newLayawaysData) as Omit<Layaway, 'id'>[];
-        
-        setLayaways(prevLayaways => {
-          const updatedLayaways = [...prevLayaways];
-          newLayaways.forEach((newLayaway, index) => {
-            const layawayWithId: Layaway = {
-              ...newLayaway,
-              id: `LAY_NEW_${Date.now()}_${index}`, 
-            };
-            updatedLayaways.push(layawayWithId);
-          });
-          return updatedLayaways.sort((a, b) => new Date(b.lastPaymentDate).getTime() - new Date(a.lastPaymentDate).getTime());
-        });
-        sessionStorage.removeItem('newLayaways');
-      }
+    fetchLayaways();
+  }, [fetchLayaways]);
 
-      const updatedLayawaysData = sessionStorage.getItem('updatedLayaways');
-      if (updatedLayawaysData) {
-        const updatedLayaways = JSON.parse(updatedLayawaysData) as { [id: string]: Layaway };
-        setLayaways(prev => 
-            prev.map(l => updatedLayaways[l.id] || l)
-                .sort((a, b) => new Date(b.lastPaymentDate).getTime() - new Date(a.lastPaymentDate).getTime())
-        );
-        sessionStorage.removeItem('updatedLayaways');
-      }
-
-    } catch (error) {
-      console.error("Could not process layaways from session storage", error);
-    }
-  }, []);
 
   const pendingLayaways = layaways.filter(l => l.status === 'Pending' || l.status === 'Cancelled');
   const completedLayaways = layaways.filter(l => l.status === 'Paid');
   
   const handleAddNewLayaway = () => {
-      router.push('/dashboard/layaways/new');
+      // This could open a dialog or navigate to a new page.
+      // Let's use a dialog for simplicity.
+      setIsDialogOpen(true);
   }
 
-  const handleAddLayaway = (layawayData: Omit<Layaway, 'id' | 'lastPaymentDate'>) => {
-    const newLayaway: Layaway = {
-        ...layawayData,
-        id: `LAY${(layaways.length + 1).toString().padStart(3, '0')}`,
-        lastPaymentDate: new Date().toISOString(),
-    };
-    setLayaways(prev => [...prev, newLayaway].sort((a, b) => new Date(b.lastPaymentDate).getTime() - new Date(a.lastPaymentDate).getTime()));
-    toast({ title: "Success!", description: "New layaway plan has been created."});
-    setIsDialogOpen(false);
+  const handleAddLayaway = async (layawayData: Omit<Layaway, 'id' | 'lastPaymentDate'>) => {
+    if (!user) return;
+    try {
+        await createLayaway(layawayData, user.username);
+        toast({ title: "Success!", description: "New layaway plan has been created."});
+        setIsDialogOpen(false);
+        fetchLayaways(); // Refresh the list
+    } catch(error: any) {
+        toast({ variant: 'destructive', title: "Error", description: error.message });
+    }
   }
 
   const LayawayTable = ({ plans, isCompleted }: { plans: Layaway[], isCompleted?: boolean }) => (

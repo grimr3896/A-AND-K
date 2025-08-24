@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -28,95 +27,80 @@ import { AddPaymentDialog } from '../../new/_components/add-payment-dialog';
 import { Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { mockLayaways } from '@/lib/mock-data';
+import { getLayawayById, addLayawayPayment } from '@/lib/actions';
+import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// This is a simplified mock of fetching and updating a single layaway
-// In a real app, this would interact with your database/API
-const findLayaway = (id: string) => {
-    // Also check session storage for updates not yet in mock data
-    const updatedLayawaysData = sessionStorage.getItem('updatedLayaways');
-    if (updatedLayawaysData) {
-        const updatedLayaways = JSON.parse(updatedLayawaysData);
-        if (updatedLayaways[id]) return updatedLayaways[id];
-    }
-     const newLayawaysData = sessionStorage.getItem('newLayaways');
-    if (newLayawaysData) {
-        const newLayaways = JSON.parse(newLayawaysData);
-        const newMatch = newLayaways.find((l: Layaway) => l.id === id);
-        if(newMatch) return newMatch;
-    }
-    return mockLayaways.find(l => l.id === id);
-};
-
+type LayawayWithPayments = Layaway & { payments: Payment[] };
 
 export default function LayawayDetailPageClient() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const { user } = useAuth();
   
-  const [layaway, setLayaway] = React.useState<Layaway | null>(null);
-  const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [layaway, setLayaway] = React.useState<LayawayWithPayments | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isAddPaymentOpen, setIsAddPaymentOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    const layawayId = params.id as string;
-    const foundLayaway = findLayaway(layawayId);
-    if (foundLayaway) {
-      setLayaway(foundLayaway);
-      // Mock initial payments based on amount paid
-      if(foundLayaway.amountPaid > 0) {
-        setPayments([{ 
-            date: foundLayaway.lastPaymentDate, 
-            amount: foundLayaway.amountPaid, 
-            method: 'M-Pesa' // Defaulting method for mock
-        }]);
-      }
-    } else {
-        toast({variant: 'destructive', title: 'Error', description: 'Layaway not found.'});
+  const layawayId = params.id as string;
+
+  const fetchLayaway = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const foundLayaway = await getLayawayById(layawayId);
+        if (foundLayaway) {
+            setLayaway(foundLayaway as LayawayWithPayments);
+        } else {
+            toast({variant: 'destructive', title: 'Error', description: 'Layaway not found.'});
+            router.push('/dashboard/layaways');
+        }
+    } catch(e) {
+        toast({variant: 'destructive', title: 'Error', description: 'Failed to load layaway details.'});
         router.push('/dashboard/layaways');
+    } finally {
+        setIsLoading(false);
     }
-  }, [params.id, router, toast]);
+  }, [layawayId, router, toast]);
+
+  React.useEffect(() => {
+    if (layawayId) {
+        fetchLayaway();
+    }
+  }, [layawayId, fetchLayaway]);
 
   const totalPaid = React.useMemo(() => {
-    return payments.reduce((sum, payment) => sum + payment.amount, 0);
-  }, [payments]);
+    return layaway?.payments.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+  }, [layaway?.payments]);
 
-  const handleAddPayment = (payment: Omit<Payment, 'date'>) => {
-    const newPayment: Payment = { ...payment, date: new Date().toISOString() };
-    setPayments(prev => [...prev, newPayment]);
-    setIsAddPaymentOpen(false);
-    toast({ title: "Payment Added", description: `Logged a payment of Ksh ${payment.amount.toFixed(2)}.`})
-  }
-
-  const handleSaveChanges = () => {
-    if (layaway) {
-        const updatedLayaway = {
-            ...layaway,
-            amountPaid: totalPaid,
-            status: totalPaid >= layaway.totalAmount ? 'Paid' : 'Pending',
-            lastPaymentDate: new Date().toISOString(),
-        };
-
-        // In a real app, this would be an API call to update the layaway.
-        // For this demo, we can just log it and navigate back.
-        console.log("Saving updated layaway:", updatedLayaway);
-
-        // We can use session storage to simulate the update on the main page
-         try {
-            const existingLayaways = JSON.parse(sessionStorage.getItem('updatedLayaways') || '{}');
-            existingLayaways[layaway.id] = updatedLayaway;
-            sessionStorage.setItem('updatedLayaways', JSON.stringify(existingLayaways));
-        } catch (error) {
-            console.error("Could not save updated layaway to session storage", error);
-        }
-
-        toast({ title: 'Layaway Updated', description: 'The layaway plan has been saved successfully.' });
-        router.push('/dashboard/layaways');
+  const handleAddPayment = async (payment: Omit<Payment, 'date'|'id'>) => {
+    if (!user || !layaway) return;
+    try {
+        await addLayawayPayment(layaway.id, payment, user.username);
+        toast({ title: "Payment Added", description: `Logged a payment of Ksh ${payment.amount.toFixed(2)}.`});
+        setIsAddPaymentOpen(false);
+        fetchLayaway(); // Refresh data
+    } catch (e: any) {
+        toast({ variant: 'destructive', title: 'Error', description: e.message });
     }
   }
 
-  if (!layaway) {
-    return <div>Loading...</div>;
+
+  if (isLoading || !layaway) {
+    return (
+        <Card>
+            <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
+            <CardContent className="space-y-4">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+            </CardFooter>
+        </Card>
+    );
   }
 
   const remainingBalance = layaway.totalAmount - totalPaid;
@@ -152,9 +136,9 @@ export default function LayawayDetailPageClient() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {payments.length > 0 ? (
-                               payments.map((payment, index) => (
-                                <TableRow key={index}>
+                            {layaway.payments.length > 0 ? (
+                               layaway.payments.map((payment) => (
+                                <TableRow key={payment.id}>
                                     <TableCell>{format(new Date(payment.date), 'PPp')}</TableCell>
                                     <TableCell>
                                         <Badge variant="secondary">{payment.method}</Badge>
@@ -200,11 +184,7 @@ export default function LayawayDetailPageClient() {
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => router.push('/dashboard/layaways')}>
-                Cancel
-            </Button>
-            <Button onClick={handleSaveChanges}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
+                Back to List
             </Button>
           </CardFooter>
         </Card>

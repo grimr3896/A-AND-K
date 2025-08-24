@@ -28,16 +28,6 @@ import type { Product, Layaway } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useProducts } from '@/contexts/products-context';
 
-const formSchema = z.object({
-  customerName: z.string().min(1, 'Customer name is required'),
-  productId: z.string().min(1, 'Product is required'),
-  totalAmount: z.coerce.number().min(0, 'Total amount cannot be negative'),
-  initialDeposit: z.coerce.number().min(0, 'Initial deposit cannot be negative'),
-}).refine(data => data.initialDeposit <= data.totalAmount, {
-    message: "Initial deposit cannot be greater than the total amount",
-    path: ["initialDeposit"],
-});
-
 type AddLayawayDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -47,6 +37,23 @@ type AddLayawayDialogProps = {
 export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway }: AddLayawayDialogProps) {
   const { toast } = useToast();
   const { products } = useProducts();
+
+  // Dynamic schema based on the selected product
+  const formSchema = z.object({
+    customerName: z.string().min(1, 'Customer name is required'),
+    productId: z.string().min(1, 'Product is required'),
+    totalAmount: z.coerce.number().min(0, 'Total amount cannot be negative'),
+    initialDeposit: z.coerce.number().min(0, 'Initial deposit cannot be negative'),
+  }).refine(data => data.initialDeposit <= data.totalAmount, {
+      message: "Initial deposit cannot be greater than the total amount",
+      path: ["initialDeposit"],
+  }).refine(data => {
+      const product = products.find(p => p.id === data.productId);
+      return !product || data.totalAmount >= product.minPrice;
+  }, {
+      message: "Total amount cannot be less than the product's minimum price.",
+      path: ["totalAmount"],
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -85,6 +92,9 @@ export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway }: AddLaya
     });
     form.reset();
   }
+
+  const selectedProduct = products.find(p => p.id === selectedProductId);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -142,7 +152,7 @@ export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway }: AddLaya
                     <FormControl>
                       <Input type="number" step="0.01" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    {selectedProduct && <FormMessage>Min price: {selectedProduct.minPrice.toFixed(2)}</FormMessage>}
                   </FormItem>
                 )}
               />
