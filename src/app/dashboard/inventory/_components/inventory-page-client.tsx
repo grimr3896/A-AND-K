@@ -181,7 +181,9 @@ export default function InventoryPageClient() {
                   <TableCell>{product.sku}</TableCell>
                   <TableCell>{product.category}</TableCell>
                   <TableCell>
-                    {product.stock < product.lowStockThreshold ? (
+                    {product.stock <= 0 ? (
+                       <Badge variant="destructive">Out of Stock</Badge>
+                    ) : product.stock < product.lowStockThreshold ? (
                       <Badge variant="destructive">Low Stock ({product.stock})</Badge>
                     ) : (
                       product.stock
