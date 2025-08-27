@@ -1,52 +1,56 @@
-// datasource db defines the database connection details.
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
 
-// generator client defines the Prisma Client settings.
 generator client {
   provider = "prisma-client-js"
+  engineType = "node-api"
 }
 
-// --- Data Models ---
-
 model Product {
-  id                String  @id @default(cuid())
-  name              String  @unique
-  sku               String? @unique
+  id                String    @id @default(cuid())
+  name              String    @unique
+  sku               String?   @unique
   category          String
   stock             Int
   price             Float
-  lowStockThreshold Int
   cost              Float
   minPrice          Float
+  lowStockThreshold Int
   supplier          String?
   description       String?
-  imageUrl          String? @default("https://placehold.co/150x150.png")
-
-  saleItems SaleItem[]
+  imageUrl          String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  saleItems         SaleItem[]
 }
 
 model Sale {
-  id            String    @id @default(cuid())
-  date          DateTime  @default(now())
+  id            String     @id @default(cuid())
+  date          DateTime   @default(now())
   customerName  String
-  paymentMethod String
   total         Float
+  paymentMethod String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   items         SaleItem[]
 }
 
 model SaleItem {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   saleId    String
   productId String
   name      String
   quantity  Int
   price     Float
-
-  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
 
   @@index([saleId])
   @@index([productId])
@@ -61,8 +65,8 @@ model Layaway {
   status          String // e.g., "Pending", "Paid", "Cancelled"
   lastPaymentDate DateTime
   createdAt       DateTime  @default(now())
-
-  payments Payment[]
+  updatedAt       DateTime  @updatedAt
+  payments        Payment[]
 }
 
 model Payment {
@@ -71,14 +75,14 @@ model Payment {
   amount     Float
   method     String
   date       DateTime @default(now())
-
-  layaway Layaway @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+  layaway    Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
   @@index([layawayId])
 }
 
 model AuditLog {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   timestamp DateTime @default(now())
   user      String
   action    String

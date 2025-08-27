@@ -14,7 +14,8 @@
     "postinstall": "prisma generate"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "engineType": "node-api"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
