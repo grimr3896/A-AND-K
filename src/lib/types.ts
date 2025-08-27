@@ -58,7 +58,7 @@ const StockInfoSchema = z.object({
 export const EmailReportInputSchema = z.object({
   salesData: z.array(ProductSaleSchema).describe("A list of products sold, including quantities and revenue."),
   lowStockItems: z.array(StockInfoSchema).describe("A list of items that are low in stock."),
-  outOfStockItems: z.array(StockInfoSchema).describe("A list of items that are completely out of stock."),
+  outOfStockItems: z.array(z.object({ name: z.string() })).describe("A list of items that are completely out of stock."),
 });
 export type EmailReportInput = z.infer<typeof EmailReportInputSchema>;
 
