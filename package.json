@@ -14,7 +14,6 @@
     "postinstall": "prisma generate"
   },
   "prisma": {
-    "engineType": "node-api",
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
