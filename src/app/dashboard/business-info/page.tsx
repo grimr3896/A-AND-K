@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from 'react';
@@ -14,9 +13,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, PlusCircle, Check, X, Eye, EyeOff, Copy, KeyRound, AlertTriangle } from 'lucide-react';
+import { Loader2, Edit, PlusCircle, Check, X, Eye, EyeOff, Copy, KeyRound, AlertTriangle, Save, Undo } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,15 +39,14 @@ function BusinessInfoPageContent() {
     const { toast } = useToast();
     const { businessInfo, setBusinessInfo, getPassword, setPassword, getResendApiKey, setResendApiKey, getFromEmail, setFromEmail, getRecipientEmail, setRecipientEmail } = useBusinessInfo();
     
-    const [editingField, setEditingField] = React.useState<string | null>(null);
+    const [isEditing, setIsEditing] = React.useState(false);
     const [passwordPrompt, setPasswordPrompt] = React.useState(false);
     const [isGeneratingKey, setIsGeneratingKey] = React.useState(false);
     const [passwordInput, setPasswordInput] = React.useState('');
-    const [tempValue, setTempValue] = React.useState<string | number>('');
     const [actionToConfirm, setActionToConfirm] = React.useState<(() => void) | null>(null);
     const [sensitiveFieldVisibility, setSensitiveFieldVisibility] = React.useState<{ [key: string]: boolean }>({});
-
-    const infoToDisplay = {
+    
+    const allFields = React.useMemo(() => ({
         "Business Name": businessInfo.name,
         "Address": businessInfo.address,
         "Tax Rate (%)": businessInfo.taxRate,
@@ -55,7 +54,14 @@ function BusinessInfoPageContent() {
         "Resend API Key": getResendApiKey(),
         "From Email": getFromEmail(),
         "Recipient Email": getRecipientEmail(),
-    };
+        ...businessInfo.customFields
+    }), [businessInfo, getPassword, getResendApiKey, getFromEmail, getRecipientEmail]);
+
+    const [tempData, setTempData] = React.useState(allFields);
+    
+    React.useEffect(() => {
+        setTempData(allFields);
+    }, [allFields]);
 
     const form = useForm({
       resolver: zodResolver(newInfoSchema),
@@ -64,6 +70,8 @@ function BusinessInfoPageContent() {
         value: '',
       }
     });
+
+    const isDirty = React.useMemo(() => JSON.stringify(tempData) !== JSON.stringify(allFields), [tempData, allFields]);
     
     const toggleVisibility = (field: string) => {
       setSensitiveFieldVisibility(prev => ({...prev, [field]: !prev[field]}));
@@ -73,13 +81,6 @@ function BusinessInfoPageContent() {
         navigator.clipboard.writeText(String(value));
         toast({ title: "Copied!", description: "The value has been copied to your clipboard."});
     }
-
-    const handleEditClick = (field: string) => {
-        requestPassword(() => {
-            setEditingField(field);
-            setTempValue(infoToDisplay[field as keyof typeof infoToDisplay]);
-        });
-    };
     
     const requestPassword = (action: () => void) => {
         setActionToConfirm(() => action);
@@ -101,47 +102,55 @@ function BusinessInfoPageContent() {
         }
     };
     
-    const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const fieldType = typeof infoToDisplay[editingField as keyof typeof infoToDisplay];
-      setTempValue(fieldType === 'number' ? Number(e.target.value) : e.target.value);
+    const handleValueChange = (key: string, value: string | number) => {
+        setTempData(prev => ({ ...prev, [key]: value }));
     }
 
-    const handleSave = () => {
-      if(editingField){
-        if (editingField === "Admin Login Password") {
-            const newPassword = tempValue as string;
-            setPassword(newPassword);
-            toast({
-                title: "Security Notice",
-                description: `Password changed successfully. Please use this for future logins and protected actions.`,
-                duration: 9000,
-            });
-        } else if (editingField === "Resend API Key") {
-             setResendApiKey(tempValue as string);
-              toast({ title: "Success!", description: `Resend API Key has been updated.` });
-        } else if (editingField === "From Email") {
-             setFromEmail(tempValue as string);
-              toast({ title: "Success!", description: `"From" email address has been updated.` });
-        } else if (editingField === "Recipient Email") {
-             setRecipientEmail(tempValue as string);
-              toast({ title: "Success!", description: `"Recipient" email address has been updated.` });
-        } else if (editingField === "Business Name"){
-            setBusinessInfo(prev => ({ ...prev, name: tempValue as string }));
-            toast({ title: "Success!", description: `Business Name has been updated.` });
-        } else if (editingField === "Address"){
-            setBusinessInfo(prev => ({ ...prev, address: tempValue as string }));
-            toast({ title: "Success!", description: `Address has been updated.` });
-        } else if (editingField === "Tax Rate (%)"){
-            setBusinessInfo(prev => ({ ...prev, taxRate: tempValue as number }));
-            toast({ title: "Success!", description: `Tax Rate has been updated.` });
-        } else {
-            // Handle custom fields
-            setBusinessInfo(prev => ({ ...prev, customFields: {...prev.customFields, [editingField]: tempValue }}));
-             toast({ title: "Success!", description: `${editingField} has been updated.` });
-        }
-        setEditingField(null);
-      }
+    const handleSaveChanges = () => {
+      requestPassword(() => {
+        // Create new objects for state updates
+        const newBusinessInfo = { ...businessInfo, customFields: { ...businessInfo.customFields } };
+        let newPassword = getPassword();
+        let newApiKey = getResendApiKey();
+        let newFromEmail = getFromEmail();
+        let newRecipientEmail = getRecipientEmail();
+
+        Object.entries(tempData).forEach(([key, value]) => {
+            if (key === "Business Name") {
+                newBusinessInfo.name = value as string;
+            } else if (key === "Address") {
+                newBusinessInfo.address = value as string;
+            } else if (key === "Tax Rate (%)") {
+                newBusinessInfo.taxRate = Number(value);
+            } else if (key === "Admin Login Password") {
+                newPassword = value as string;
+            } else if (key === "Resend API Key") {
+                newApiKey = value as string;
+            } else if (key === "From Email") {
+                newFromEmail = value as string;
+            } else if (key === "Recipient Email") {
+                newRecipientEmail = value as string;
+            } else {
+                newBusinessInfo.customFields[key] = value;
+            }
+        });
+
+        // Update state
+        setBusinessInfo(newBusinessInfo);
+        setPassword(newPassword);
+        setResendApiKey(newApiKey);
+        setFromEmail(newFromEmail);
+        setRecipientEmail(newRecipientEmail);
+
+        setIsEditing(false);
+        toast({ title: "Success!", description: "All changes have been saved." });
+      });
     };
+    
+    const handleCancelChanges = () => {
+        setTempData(allFields);
+        setIsEditing(false);
+    }
     
     const handleAddNewInfo = (values: z.infer<typeof newInfoSchema>) => {
       setBusinessInfo(prev => ({...prev, customFields: {...prev.customFields, [values.category]: values.value}}));
@@ -150,7 +159,6 @@ function BusinessInfoPageContent() {
     }
 
     const generateNewSecureApiKey = () => {
-      // In a real app, this should be done on the server-side with a crypto library
       const array = new Uint32Array(16);
       window.crypto.getRandomValues(array);
       const randomString = Array.from(array, dec => ('0' + dec.toString(16)).substr(-8)).join('');
@@ -160,10 +168,11 @@ function BusinessInfoPageContent() {
     const handleGenerateApiKey = () => {
         requestPassword(() => {
             const newKey = generateNewSecureApiKey();
-            setResendApiKey(newKey);
+            setResendApiKey(newKey); // This will update localStorage via useEffect in context
+            setTempData(prev => ({ ...prev, "Resend API Key": newKey })); // Update temporary state as well
             toast({
                 title: "API Key Generated",
-                description: "A new unique API key has been generated and saved.",
+                description: "A new unique API key has been generated. Click 'Save Changes' to apply.",
             });
             setIsGeneratingKey(false);
         });
@@ -184,25 +193,36 @@ function BusinessInfoPageContent() {
                 Manage your business details and settings. This information will be used across the application.
               </CardDescription>
             </div>
-            <Button onClick={() => setIsGeneratingKey(true)}>
-                <KeyRound className="mr-2 h-4 w-4" />
-                Generate New API Key
-            </Button>
+            <div className="flex gap-2">
+                 <Button onClick={() => setIsGeneratingKey(true)} variant="outline">
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Generate New API Key
+                </Button>
+                 {isEditing ? (
+                    <Button onClick={handleCancelChanges} variant="ghost">
+                        <Undo className="mr-2 h-4 w-4" />
+                        Cancel
+                    </Button>
+                ) : (
+                    <Button onClick={() => setIsEditing(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Info
+                    </Button>
+                )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-            {Object.entries({ ...infoToDisplay, ...businessInfo.customFields }).map(([key, value]) => (
+            {Object.entries(tempData).map(([key, value]) => (
                  <div key={key} className="flex items-center justify-between p-3 rounded-md border min-h-[72px]">
                     <div className="flex-1 overflow-hidden">
                         <p className="text-sm font-medium text-muted-foreground">{key}</p>
-                        {editingField === key ? (
+                        {isEditing ? (
                              <Input
                                 type={typeof value === 'number' ? 'number' : (isSensitiveField(key) ? (sensitiveFieldVisibility[key] ? 'text' : 'password') : 'text')}
-                                value={String(tempValue)}
-                                onChange={handleValueChange}
+                                value={String(value)}
+                                onChange={(e) => handleValueChange(key, typeof allFields[key as keyof typeof allFields] === 'number' ? Number(e.target.value) : e.target.value)}
                                 className="mt-1"
-                                autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                              />
                         ) : (
                              <p className="text-lg font-semibold truncate">
@@ -211,32 +231,28 @@ function BusinessInfoPageContent() {
                         )}
                     </div>
                      <div className="flex items-center gap-2 ml-4">
-                         {editingField === key ? (
+                        {isSensitiveField(key) && (
                             <>
-                                 <Button onClick={handleSave} size="icon"><Check className="h-4 w-4" /></Button>
-                                 <Button onClick={() => setEditingField(null)} size="icon" variant="ghost"><X className="h-4 w-4" /></Button>
-                            </>
-                         ) : (
-                            <>
-                                {isSensitiveField(key) && (
-                                    <>
-                                        <Button variant="ghost" size="icon" onClick={() => toggleVisibility(key)}>
-                                            {sensitiveFieldVisibility[key] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleCopy(value)}>
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
-                                    </>
-                                )}
-                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(key)}>
-                                    <Edit className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" onClick={() => toggleVisibility(key)}>
+                                    {sensitiveFieldVisibility[key] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleCopy(value as string)}>
+                                    <Copy className="h-4 w-4" />
                                 </Button>
                             </>
-                         )}
+                        )}
                      </div>
                  </div>
             ))}
         </CardContent>
+         {isEditing && (
+            <CardFooter className="border-t px-6 py-4">
+                <Button onClick={handleSaveChanges} disabled={!isDirty}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                </Button>
+            </CardFooter>
+         )}
       </Card>
       
       <Card className="mt-8">
@@ -296,7 +312,7 @@ function BusinessInfoPageContent() {
                     Generate New API Key?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                    Generating a new API key will invalidate the old one immediately. Any services or integrations using the old key will stop working. This action cannot be undone.
+                    Generating a new API key will invalidate the old one immediately. Any services or integrations using the old key will stop working. This action cannot be undone, but you must click "Save Changes" to finalize it.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
