@@ -187,7 +187,7 @@ export default function InventoryPageClient() {
                 <TableRow key={product.id}>
                   <TableCell className="hidden sm:table-cell">
                     <Image
-                        src={product.imageUrl || `https://placehold.co/64x64.png`}
+                        src={product.imageUrl || `https://placehold.co/64x64/eee/ccc/png?text=No+Image`}
                         alt={product.name}
                         width={64}
                         height={64}
@@ -277,3 +277,5 @@ export default function InventoryPageClient() {
     </>
   );
 }
+
+    
