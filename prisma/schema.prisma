@@ -2,89 +2,83 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
 
-generator client {
-  provider = "prisma-client-js"
-  engineType = "node-api"
-}
-
 model Product {
-  id                String    @id @default(cuid())
-  name              String    @unique
-  sku               String?   @unique
+  id                String  @id @default(cuid())
+  name              String  @unique
+  sku               String? @unique
   category          String
   stock             Int
-  price             Float
-  cost              Float
-  minPrice          Float
+  price             Int
   lowStockThreshold Int
+  cost              Int
+  minPrice          Int
   supplier          String?
   description       String?
-  imageUrl          String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  saleItems         SaleItem[]
+  imageUrl          String? @default("https://placehold.co/150x150.png")
+  sales             SaleItem[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Sale {
-  id            String     @id @default(cuid())
-  date          DateTime   @default(now())
+  id            String    @id @default(cuid())
+  date          DateTime  @default(now())
   customerName  String
-  total         Float
+  total         Int
   paymentMethod String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
   items         SaleItem[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model SaleItem {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
+  product   Product @relation(fields: [productId], references: [id])
   productId String
   name      String
   quantity  Int
-  price     Float
-  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  price     Int
   createdAt DateTime @default(now())
-
-  @@index([saleId])
-  @@index([productId])
+  updatedAt DateTime @updatedAt
 }
 
 model Layaway {
   id              String    @id @default(cuid())
   customerName    String
   productName     String
-  totalAmount     Float
-  amountPaid      Float
-  status          String // e.g., "Pending", "Paid", "Cancelled"
+  totalAmount     Int
+  amountPaid      Int
+  status          String // e.g., 'Pending', 'Paid', 'Cancelled'
   lastPaymentDate DateTime
+  payments        Payment[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  payments        Payment[]
 }
 
 model Payment {
-  id         String   @id @default(cuid())
-  layawayId  String
-  amount     Float
-  method     String
-  date       DateTime @default(now())
-  layaway    Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
-
-  @@index([layawayId])
+  id        String   @id @default(cuid())
+  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+  layawayId String
+  amount    Int
+  method    String
+  date      DateTime @default(now())
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  timestamp DateTime @default(now())
+  id        Int      @id @default(autoincrement())
   user      String
   action    String
   details   String
+  timestamp DateTime @default(now())
 }

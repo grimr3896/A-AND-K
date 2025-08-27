@@ -10,12 +10,10 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate"
+    "typecheck": "tsc --noEmit"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts",
-    "engineType": "node-api"
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
