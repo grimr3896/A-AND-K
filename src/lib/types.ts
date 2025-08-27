@@ -3,7 +3,8 @@ import { z } from 'zod';
 import type { Product as PrismaProduct, Sale as PrismaSale, SaleItem as PrismaSaleItem, Layaway as PrismaLayaway, Payment as PrismaPayment, AuditLog as PrismaAuditLog } from '@prisma/client';
 
 export type Product = PrismaProduct;
-export type Sale = PrismaSale & { items: (PrismaSaleItem & { product?: PrismaProduct })[] };
+export type Sale = PrismaSale;
+export type SaleItem = PrismaSaleItem;
 export type Layaway = PrismaLayaway;
 export type Payment = PrismaPayment;
 export type AuditLog = PrismaAuditLog;

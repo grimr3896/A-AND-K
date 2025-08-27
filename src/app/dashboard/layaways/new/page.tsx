@@ -1,14 +1,17 @@
 
+
 "use client";
 
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-const NewLayawayPageClient = dynamic(() => import('./_components/new-layaway-page-client'), { 
-    ssr: false,
-    loading: () => <Skeleton className="w-full h-[600px]" />,
-});
-
+// This page is deprecated. The functionality has been moved to a dialog
+// in the main layaways page. Redirecting to the layaways list.
 export default function NewLayawayPage() {
-    return <NewLayawayPageClient />;
+    const router = useRouter();
+    useEffect(() => {
+        router.replace('/dashboard/layaways');
+    }, [router]);
+
+    return null; // Render nothing while redirecting
 }

@@ -31,7 +31,7 @@ import { useProducts } from '@/contexts/products-context';
 type AddLayawayDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddLayaway: (layaway: Omit<Layaway, 'id' | 'lastPaymentDate'>) => void;
+  onAddLayaway: (layaway: Omit<Layaway, 'id' | 'lastPaymentDate' | 'status'> & { initialDeposit: number }) => void;
 };
 
 export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway }: AddLayawayDialogProps) {
@@ -89,7 +89,7 @@ export function AddLayawayDialog({ isOpen, onOpenChange, onAddLayaway }: AddLaya
         productName: product.name,
         totalAmount: values.totalAmount,
         amountPaid: values.initialDeposit,
-        status: 'Pending',
+        initialDeposit: values.initialDeposit,
     });
     form.reset();
   }

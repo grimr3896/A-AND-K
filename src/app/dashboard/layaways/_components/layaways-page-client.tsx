@@ -27,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import { AddLayawayDialog } from './add-layaway-dialog';
 import { createLayaway, getLayaways } from '@/lib/actions';
 import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LayawaysPageClient() {
   const [layaways, setLayaways] = React.useState<Layaway[]>([]);
@@ -57,12 +58,10 @@ export default function LayawaysPageClient() {
   const completedLayaways = layaways.filter(l => l.status === 'Paid');
   
   const handleAddNewLayaway = () => {
-      // This could open a dialog or navigate to a new page.
-      // Let's use a dialog for simplicity.
       setIsDialogOpen(true);
   }
 
-  const handleAddLayaway = async (layawayData: Omit<Layaway, 'id' | 'lastPaymentDate'>) => {
+  const handleAddLayaway = async (layawayData: Omit<Layaway, 'id' | 'lastPaymentDate' | 'status'> & { initialDeposit: number }) => {
     if (!user) return;
     try {
         await createLayaway(layawayData, user.username);
@@ -91,37 +90,44 @@ export default function LayawaysPageClient() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {plans.map((layaway) => {
-            const remaining = layaway.totalAmount - layaway.amountPaid;
-            return (
-                <TableRow 
-                  key={layaway.id} 
-                  onClick={() => router.push(`/dashboard/layaways/${layaway.id}`)} 
-                  className={`cursor-pointer ${isCompleted ? 'text-green-600 dark:text-green-400 hover:bg-green-500/10' : 'hover:bg-muted/50'}`}
-                >
-                    <TableCell className="font-medium">{layaway.customerName}</TableCell>
-                    <TableCell>{layaway.productName}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                          layaway.status === 'Pending' ? 'secondary' : 
-                          layaway.status === 'Paid' ? 'default' : 'destructive'
-                        }>
-                        {layaway.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{format(new Date(layaway.lastPaymentDate), 'PPP')}</TableCell>
-                    <TableCell className="text-right">Ksh {layaway.amountPaid.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">Ksh {remaining > 0 ? remaining.toFixed(2) : '0.00'}</TableCell>
-                    <TableCell className="text-right font-medium">Ksh {layaway.totalAmount.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </TableCell>
+        {isLoading ? (
+             Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                    <TableCell colSpan={8}><Skeleton className="h-8 w-full" /></TableCell>
                 </TableRow>
-            )
-        })}
-        {plans.length === 0 && (
+            ))
+        ) : plans.length > 0 ? (
+            plans.map((layaway) => {
+                const remaining = layaway.totalAmount - layaway.amountPaid;
+                return (
+                    <TableRow 
+                      key={layaway.id} 
+                      onClick={() => router.push(`/dashboard/layaways/${layaway.id}`)} 
+                      className={`cursor-pointer ${isCompleted ? 'text-green-600 dark:text-green-400 hover:bg-green-500/10' : 'hover:bg-muted/50'}`}
+                    >
+                        <TableCell className="font-medium">{layaway.customerName}</TableCell>
+                        <TableCell>{layaway.productName}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                              layaway.status === 'Pending' ? 'secondary' : 
+                              layaway.status === 'Paid' ? 'default' : 'destructive'
+                            }>
+                            {layaway.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{format(new Date(layaway.lastPaymentDate), 'PPP')}</TableCell>
+                        <TableCell className="text-right">Ksh {layaway.amountPaid.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">Ksh {remaining > 0 ? remaining.toFixed(2) : '0.00'}</TableCell>
+                        <TableCell className="text-right font-medium">Ksh {layaway.totalAmount.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                )
+            })
+        ) : (
             <TableRow>
                 <TableCell colSpan={8} className="text-center h-24">
                     No layaway plans in this category.
