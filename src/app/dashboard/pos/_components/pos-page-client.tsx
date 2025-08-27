@@ -74,6 +74,11 @@ export default function POSPageClient() {
     const receiptRef = React.useRef<HTMLDivElement>(null);
 
     const addProductToCart = React.useCallback((product: Product) => {
+        if (!product) {
+            toast({ variant: 'destructive', title: 'Product Not Found', description: 'This product does not exist in the inventory.' });
+            return;
+        }
+
         const existingCartItemIndex = cart.findIndex(item => item.id === product.id);
         
         if (existingCartItemIndex > -1) {
@@ -82,7 +87,7 @@ export default function POSPageClient() {
                 updatedCart[existingCartItemIndex].quantity += 1;
                 setCart(updatedCart);
             } else {
-                toast({ variant: 'destructive', title: 'Out of Stock', description: `No more ${product.name} in stock.` });
+                toast({ variant: 'destructive', title: 'Out of Stock', description: `Only ${product.stock} of ${product.name} available.` });
             }
         } else {
             if (product.stock > 0) {
