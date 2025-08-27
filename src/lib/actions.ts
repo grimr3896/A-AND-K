@@ -5,53 +5,71 @@ import prisma from './db';
 import type { Product, CartItem, Layaway, Payment, DashboardStats } from './types';
 import { revalidatePath } from 'next/cache';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, format } from 'date-fns';
-import { mockProducts, mockSales, mockLayaways } from './mock-data';
 
 // --- Audit Log ---
 async function logAction(user: string, action: string, details: string) {
-  // In a real app, this would write to a database. For mock, we'll log to console.
-  console.log(`[AUDIT LOG | ${user}] ${action}: ${details}`);
+    try {
+        await prisma.auditLog.create({
+            data: {
+                user,
+                action,
+                details,
+            },
+        });
+    } catch (error) {
+        console.error("Failed to log action:", error);
+    }
 }
 
 // --- Product Actions ---
 export async function getProducts(): Promise<Product[]> {
-  // Using mock data
-  return Promise.resolve(mockProducts);
+  return prisma.product.findMany({ orderBy: { name: 'asc' } });
 }
 
 export async function addProduct(productData: Omit<Product, 'id'>, user: string) {
-  const newProduct: Product = { ...productData, id: `PROD_NEW_${Date.now()}` };
-  mockProducts.push(newProduct);
+  // Check for existing product with the same name or SKU
+  const existingByName = await prisma.product.findFirst({ where: { name: productData.name } });
+  if (existingByName) {
+    throw new Error(`A product with the name "${productData.name}" already exists.`);
+  }
+  const existingBySku = productData.sku ? await prisma.product.findFirst({ where: { sku: productData.sku } }) : null;
+  if (existingBySku) {
+      throw new Error(`A product with the SKU "${productData.sku}" already exists.`);
+  }
+
+  const newProduct = await prisma.product.create({ data: productData });
   await logAction(user, 'Product Added', `Added "${newProduct.name}" (ID: ${newProduct.id})`);
   revalidatePath('/dashboard/inventory');
   return newProduct;
 }
 
 export async function updateProduct(productData: Product, user: string) {
-  const index = mockProducts.findIndex(p => p.id === productData.id);
-  if (index !== -1) {
-    mockProducts[index] = productData;
-    await logAction(user, 'Product Updated', `Updated "${productData.name}" (ID: ${productData.id})`);
-    revalidatePath('/dashboard/inventory');
-  }
-  return productData;
+  const updatedProduct = await prisma.product.update({
+    where: { id: productData.id },
+    data: productData,
+  });
+  await logAction(user, 'Product Updated', `Updated "${productData.name}" (ID: ${productData.id})`);
+  revalidatePath('/dashboard/inventory');
+  return updatedProduct;
 }
 
 export async function deleteProduct(productId: string, user: string) {
-  const index = mockProducts.findIndex(p => p.id === productId);
-  if (index !== -1) {
-    const productName = mockProducts[index].name;
-    mockProducts.splice(index, 1);
-    await logAction(user, 'Product Deleted', `Deleted "${productName}" (ID: ${productId})`);
-    revalidatePath('/dashboard/inventory');
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (product) {
+      await prisma.product.delete({ where: { id: productId } });
+      await logAction(user, 'Product Deleted', `Deleted "${product.name}" (ID: ${productId})`);
+      revalidatePath('/dashboard/inventory');
   }
 }
 
 export async function receiveStock(productId: string, quantity: number, user: string) {
-    const product = mockProducts.find(p => p.id === productId);
+    const product = await prisma.product.findUnique({ where: { id: productId } });
     if (product) {
-        product.stock += quantity;
-        await logAction(user, 'Stock Received', `Received ${quantity} units for "${product.name}". New stock: ${product.stock}`);
+        const updatedProduct = await prisma.product.update({
+            where: { id: productId },
+            data: { stock: { increment: quantity } },
+        });
+        await logAction(user, 'Stock Received', `Received ${quantity} units for "${product.name}". New stock: ${updatedProduct.stock}`);
         revalidatePath('/dashboard/inventory');
         revalidatePath('/dashboard/stock-requirements');
     }
@@ -62,29 +80,31 @@ export async function receiveStock(productId: string, quantity: number, user: st
 export async function processCheckout(cart: CartItem[], customerName: string, paymentMethod: string, user: string) {
   const total = cart.reduce((acc, item) => acc + item.agreedPrice * item.quantity, 0);
 
-  const sale = {
-    id: `SALE_${Date.now()}`,
-    date: new Date().toISOString(),
-    customerName: customerName || 'Walk-in Customer',
-    total,
-    paymentMethod,
-    items: cart.map(item => ({
-      saleId: `SALE_${Date.now()}`,
-      productId: item.id,
-      name: item.name,
-      quantity: item.quantity,
-      price: item.agreedPrice,
-    })),
-  };
+  const sale = await prisma.sale.create({
+      data: {
+          customerName: customerName || 'Walk-in Customer',
+          total,
+          paymentMethod,
+          items: {
+              create: cart.map(item => ({
+                  productId: item.id,
+                  name: item.name,
+                  quantity: item.quantity,
+                  price: item.agreedPrice,
+              })),
+          },
+      },
+      include: {
+          items: true,
+      },
+  });
 
-  mockSales.push(sale);
-
-  // Update stock levels in mock data
+  // Update stock levels
   for (const item of cart) {
-    const product = mockProducts.find(p => p.id === item.id);
-    if(product) {
-        product.stock -= item.quantity;
-    }
+    await prisma.product.update({
+      where: { id: item.id },
+      data: { stock: { decrement: item.quantity } },
+    });
   }
 
   await logAction(user, 'Sale Processed', `Sale ID: ${sale.id}, Total: ${sale.total.toFixed(2)}`);
@@ -98,51 +118,64 @@ export async function processCheckout(cart: CartItem[], customerName: string, pa
 // --- Layaway Actions ---
 
 export async function getLayaways(): Promise<Layaway[]> {
-    return Promise.resolve(mockLayaways);
+    return prisma.layaway.findMany({ orderBy: { lastPaymentDate: 'desc' } });
 }
 
 export async function getLayawayById(id: string) {
-    const layaway = mockLayaways.find(l => l.id === id);
-    // Mocking payments as well for detail view
-    if (layaway) {
-        return {
-            ...layaway,
-            payments: [
-                { id: 'PAY1', layawayId: id, amount: layaway.amountPaid / 2, method: 'Initial Deposit', date: subDays(new Date(layaway.lastPaymentDate), 10).toISOString() },
-                { id: 'PAY2', layawayId: id, amount: layaway.amountPaid / 2, method: 'M-Pesa', date: layaway.lastPaymentDate }
-            ]
-        }
-    }
-    return null;
+    return prisma.layaway.findUnique({
+        where: { id },
+        include: { payments: { orderBy: { date: 'asc' } } }
+    });
 }
 
 export async function createLayaway(layawayData: Omit<Layaway, 'id'|'lastPaymentDate'>, user: string) {
-    const newLayaway = {
-       ...layawayData,
-       id: `LAY_${Date.now()}`,
-       lastPaymentDate: new Date().toISOString(),
-    };
-    mockLayaways.push(newLayaway);
+    const newLayaway = await prisma.layaway.create({
+        data: {
+            ...layawayData,
+            lastPaymentDate: new Date(),
+        }
+    });
+
+    if (layawayData.amountPaid > 0) {
+        await prisma.payment.create({
+            data: {
+                layawayId: newLayaway.id,
+                amount: layawayData.amountPaid,
+                method: 'Initial Deposit',
+            }
+        });
+    }
+
     await logAction(user, 'Layaway Created', `Layaway for ${newLayaway.customerName} created. ID: ${newLayaway.id}`);
     revalidatePath('/dashboard/layaways');
     return newLayaway;
 }
 
-export async function addLayawayPayment(layawayId: string, payment: Omit<Payment, 'date' | 'id'>, user: string) {
-    const layaway = mockLayaways.find(l => l.id === layawayId);
+export async function addLayawayPayment(layawayId: string, payment: Omit<Payment, 'date' | 'id' | 'layawayId'>, user: string) {
+    const layaway = await prisma.layaway.findUnique({ where: { id: layawayId } });
     if (!layaway) throw new Error("Layaway not found");
 
-    layaway.amountPaid += payment.amount;
-    layaway.lastPaymentDate = new Date().toISOString();
-    
-    if(layaway.amountPaid >= layaway.totalAmount) {
-        layaway.status = 'Paid';
-    }
+    const newPayment = await prisma.payment.create({
+        data: {
+            layawayId: layawayId,
+            amount: payment.amount,
+            method: payment.method,
+        }
+    });
+
+    const updatedLayaway = await prisma.layaway.update({
+        where: { id: layawayId },
+        data: {
+            amountPaid: { increment: payment.amount },
+            lastPaymentDate: new Date(),
+            status: (layaway.amountPaid + payment.amount) >= layaway.totalAmount ? 'Paid' : 'Pending',
+        }
+    });
 
     await logAction(user, 'Layaway Payment Added', `Added ${payment.amount} to Layaway ID: ${layawayId}`);
     revalidatePath(`/dashboard/layaways`);
     revalidatePath(`/dashboard/layaways/${layawayId}`);
-    return { ...payment, id: `PAY_${Date.now()}`, date: new Date().toISOString()};
+    return newPayment;
 }
 
 // --- Dashboard Actions ---
@@ -165,13 +198,18 @@ export async function getDashboardStats(range: 'today' | 'this-week' | 'this-mon
             break;
     }
 
-    const salesInRange = mockSales.filter(sale => new Date(sale.date) >= gte);
+    const salesInRange = await prisma.sale.findMany({
+        where: { date: { gte } },
+        include: { items: { include: { product: true } } },
+    });
 
     const totalRevenue = salesInRange.reduce((acc, sale) => acc + sale.total, 0);
     const totalTransactions = salesInRange.length;
     const averageTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 
-    const monthlySales = mockSales.filter(s => new Date(s.date) >= startOfMonth(now) && new Date(s.date) <= endOfMonth(now));
+    const monthlySales = await prisma.sale.findMany({
+        where: { date: { gte: startOfMonth(now), lte: endOfMonth(now) } },
+    });
     const monthlyRevenue = monthlySales.reduce((acc, sale) => acc + sale.total, 0);
     
     const salesTrendMap = new Map<string, number>();
@@ -185,9 +223,9 @@ export async function getDashboardStats(range: 'today' | 'this-week' | 'this-mon
     const categorySalesMap = new Map<string, number>();
     salesInRange.forEach(sale => {
         sale.items.forEach(item => {
-             const product = mockProducts.find(p => p.id === item.productId);
-             if (product) {
-                 const category = product.category;
+             // The product is already included in the query, so we can access it
+             if (item.product) {
+                 const category = item.product.category;
                  categorySalesMap.set(category, (categorySalesMap.get(category) || 0) + (item.price * item.quantity));
              }
         });
