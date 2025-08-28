@@ -2,8 +2,10 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "node-api"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+  engineType      = "library"
 }
 
 datasource db {
@@ -13,37 +15,36 @@ datasource db {
 
 model Product {
   id                String  @id @default(cuid())
-  name              String  @unique
-  sku               String? @unique
+  name              String
+  sku               String  @unique
   category          String
   stock             Int
   price             Float
+  lowStockThreshold Int
   cost              Float
   minPrice          Float
-  lowStockThreshold Int
-  imageUrl          String?
   supplier          String?
   description       String?
-  saleItems         SaleItem[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  imageUrl          String?
+
+  saleItems SaleItem[]
 }
 
 model Sale {
   id            String     @id @default(cuid())
   date          DateTime   @default(now())
   customerName  String
+  items         SaleItem[]
   total         Float
   paymentMethod String
-  items         SaleItem[]
 }
 
 model SaleItem {
   id        String  @id @default(cuid())
-  sale      Sale    @relation(fields: [saleId], references: [id])
   saleId    String
-  product   Product @relation(fields: [productId], references: [id])
+  sale      Sale    @relation(fields: [saleId], references: [id])
   productId String
+  product   Product @relation(fields: [productId], references: [id])
   name      String
   quantity  Int
   price     Float
@@ -55,24 +56,22 @@ model Layaway {
   productName     String
   totalAmount     Float
   amountPaid      Float
-  status          String // e.g., 'Pending', 'Paid', 'Cancelled'
-  lastPaymentDate DateTime
+  status          String // "Pending", "Paid", "Cancelled"
+  lastPaymentDate DateTime  @default(now())
   payments        Payment[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
 }
 
 model Payment {
   id        String   @id @default(cuid())
-  layaway   Layaway  @relation(fields: [layawayId], references: [id])
   layawayId String
-  amount    Float
+  layaway   Layaway  @relation(fields: [layawayId], references: [id])
   date      DateTime @default(now())
-  method    String
+  amount    Float
+  method    String // "Cash", "M-Pesa", "Card"
 }
 
 model AuditLog {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   timestamp DateTime @default(now())
   user      String
   action    String
