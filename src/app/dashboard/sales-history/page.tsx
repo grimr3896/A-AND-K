@@ -23,18 +23,9 @@ import { format } from 'date-fns';
 import { PasswordProtectedRoute } from '@/components/auth/password-protected-route';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Sale, SaleItem } from '@/lib/types';
-import prisma from '@/lib/db'; // This direct import is safe in Server Components
+import { getSalesHistory } from '@/lib/actions';
 
 type SaleWithItems = Sale & { items: SaleItem[] };
-
-async function getSalesHistory(): Promise<SaleWithItems[]> {
-    const sales = await prisma.sale.findMany({
-        include: { items: true },
-        orderBy: { date: 'desc' }
-    });
-    return sales as SaleWithItems[];
-}
-
 
 function SalesHistoryPageContent() {
   const [sales, setSales] = React.useState<SaleWithItems[]>([]);
@@ -42,18 +33,10 @@ function SalesHistoryPageContent() {
   
   React.useEffect(() => {
     const fetchSales = async () => {
+        setIsLoading(true);
         try {
-            // This is a client component, so we can't call prisma directly.
-            // We would need to either:
-            // 1. Fetch from an API route that gets the data.
-            // 2. Pass the data as a prop from a parent Server Component.
-            // For now, we will create a client-side fetch to a hypothetical API.
-            // This part of the code will not work without an API route.
-            // To make it work for demo, we can just use the mock data approach.
-            const response = await fetch('/api/sales');
-            const data = await response.json();
-            setSales(data);
-
+            const salesData = await getSalesHistory();
+            setSales(salesData);
         } catch (error) {
             console.error("Failed to fetch sales history", error);
             // Fallback for demo, would show an error in a real app
@@ -62,21 +45,7 @@ function SalesHistoryPageContent() {
         }
     }
     
-    // fetchSales();
-    // Since we don't have an API route yet, let's just mark loading as false.
-    // In a real app the fetch logic above would be used.
-    setIsLoading(false);
-
-  }, []);
-
-  // For demonstration purposes, we will use this mock fetch function
-   React.useEffect(() => {
-    async function fetchMockSales() {
-        const salesData = await getSalesHistory();
-        setSales(salesData);
-        setIsLoading(false);
-    }
-    fetchMockSales();
+    fetchSales();
   }, []);
 
   return (

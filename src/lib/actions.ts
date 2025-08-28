@@ -107,6 +107,14 @@ export async function processCheckout(cart: CartItem[], customerName: string, pa
     return sale;
 }
 
+export async function getSalesHistory(): Promise<(Sale & { items: SaleItem[] })[]> {
+    const sales = await prisma.sale.findMany({
+        include: { items: true },
+        orderBy: { date: 'desc' }
+    });
+    return sales as (Sale & { items: SaleItem[] })[];
+}
+
 
 // --- Layaway Actions ---
 export async function getLayaways(): Promise<Layaway[]> {
